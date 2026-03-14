@@ -89,7 +89,18 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   <div id="info-inner">
     <button id="info-close" onclick="toggleInfo()">✕</button>
     <h2>LeStar Z's Kicker</h2>
-    <p class="intro">This Kicker, like all of the LeStar Z apps, is designed to help you learn. You can't use it in games, but you can take the knowledge you gain from it to those games. To use it effectively put your phone with the app showing on the table. Set the cue ball on the table and on the app to about the same position, and choose a desired point on the table that the cue ball needs to go — to pocket an object ball, to kick an opponent's ball away, to play a safe. Then add as many lines as necessary for the cue ball to get to that position, and grab the endpoint of the last segment and put it on the target location. The diagram will show you the path and the readouts will tell you the speed and spin you need to get there. Experiment and see if you can adjust yourself and the bias slider so that you can consistently calculate the shot.</p>
+    <p class="intro">This Kicker, like all of the LeStar Z apps, is designed to help you learn. You can't use it in games, but you can take the knowledge you gain from it to those games. To use it effectively:</p>
+    <ol style="color:rgba(255,255,255,0.88);font-size:0.82rem;line-height:1.8;padding-left:1.4em;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.12);">
+      <li>Put your phone with the app showing on the table.</li>
+      <li>Set the cue ball on the table and on the app to about the same position.</li>
+      <li>Choose a desired point on the table that the cue ball needs to go — to pocket an object ball, to kick an opponent's ball away, to play a safe.</li>
+      <li>Then add as many rails as necessary for the cue ball to get to that position.</li>
+      <li>Grab the endpoint of the last segment.</li>
+      <li>Put it on the target location.</li>
+      <li>The diagram will show you the path.</li>
+      <li>The readouts will tell you the speed and spin you need to get there.</li>
+      <li>Experiment and see if you can adjust yourself and the bias slider so that you can consistently calculate the shot.</li>
+    </ol>
     <p><strong>AIM HANDLE (gold ●):</strong> Drag the white cue ball to your position on the table. Drag the gold handle to set your aim direction. The gold line shows the ball's path to the first rail contact.</p>
     <p><strong>BOUNCE CHAIN:</strong> Each rail contact continues in a new color — blue, red, green, violet. Use ＋ ADD RAIL to extend the chain up to 5 rails; － REMOVE RAIL to trim it back.</p>
     <p><strong>ENDPOINT HANDLE (white ●):</strong> The white dot at the end of the last segment is draggable. Pull it to any spot on the table and the app reverse-solves the aim angle to deliver the ball there. All segments update live. This answers "how do I aim to get it there?"</p>
@@ -233,8 +244,8 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   </div>
   <div class="srow" style="margin-top:6px;">
     <span class="slbl">SPIN</span>
-    <input type="range" id="sl-spn" min="-100" max="100" value="0" oninput="onSliders()">
-    <span class="sval" id="sv-spn">NONE</span>
+    <input type="range" id="sl-spn" min="-4" max="4" value="0" step="1" oninput="onSliders()">
+    <span class="sval" id="sv-spn">center</span>
   </div>
   <div class="srow" style="margin-top:6px;">
     <span class="slbl">BIAS</span>
@@ -341,27 +352,34 @@ function terminalPt(aimAngle) {
   return segs.length>0 ? segs[segs.length-1].to : null;
 }
 
-// Coarse scan + 3-pass refinement to find aimAngle whose terminal ≈ (tx,ty)
+// Newton-step solver: one gradient step per drag frame toward target.
+// Computes how the terminal point moves per radian of aim change,
+// then steps the aim angle in that direction. No wide scanning = no jumps.
 function solveAngle(tx, ty) {
-  const N=720;
-  let bestA=S.aimAngle, bestD=Infinity;
-  for(let i=0;i<N;i++){
-    const a=(i/N)*Math.PI*2-Math.PI;
-    const tp=terminalPt(a); if(!tp) continue;
-    const d=Math.hypot(tp.x-tx,tp.y-ty);
-    if(d<bestD){bestD=d;bestA=a;}
-  }
-  let lo=bestA-Math.PI/N, hi=bestA+Math.PI/N;
-  for(let pass=0;pass<3;pass++){
-    const step=(hi-lo)/24;
-    for(let a=lo;a<=hi;a+=step){
-      const tp=terminalPt(a); if(!tp) continue;
-      const d=Math.hypot(tp.x-tx,tp.y-ty);
-      if(d<bestD){bestD=d;bestA=a;}
-    }
-    lo=bestA-(hi-lo)*0.6; hi=bestA+(hi-lo)*0.6;
-  }
-  return bestA;
+  const a   = S.aimAngle;
+  const eps = 0.003;  // ~0.17° for numerical gradient
+
+  const tp  = terminalPt(a);
+  const tp2 = terminalPt(a + eps);
+  if (!tp || !tp2) return a;
+
+  // Rate of change of terminal point per radian
+  const dtx = (tp2.x - tp.x) / eps;
+  const dty = (tp2.y - tp.y) / eps;
+
+  // Error vector: how far terminal is from finger
+  const ex = tx - tp.x;
+  const ey = ty - tp.y;
+
+  // Least-squares step along gradient
+  const denom = dtx*dtx + dty*dty;
+  if (denom < 0.01) return a;
+
+  const da = (dtx*ex + dty*ey) / denom;
+
+  // Clamp step to ±8° per frame so it can't teleport
+  const MAX_STEP = 0.14;
+  return a + Math.max(-MAX_STEP, Math.min(MAX_STEP, da));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -475,7 +493,9 @@ function svgPt(e){
   const pt=svg.createSVGPoint();
   const src=e.touches?e.touches[0]:e;
   pt.x=src.clientX;pt.y=src.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
+  // Use the content group's CTM — always returns coords in original 460×260
+  // table space regardless of viewBox swap or group rotation transform.
+  return pt.matrixTransform(document.getElementById('tbl-content').getScreenCTM().inverse());
 }
 function clampBall(x,y){return{x:Math.max(TL.left+BALL_R,Math.min(TL.right-BALL_R,x)),y:Math.max(TL.top+BALL_R,Math.min(TL.bottom-BALL_R,y))};}
 
@@ -517,12 +537,17 @@ function removeRail(){if(S.numRails<=1)return;S.numRails--;buildReadouts();rende
 
 function onSliders(){
   S.speed=parseInt($('sl-spd').value)/100;
-  const sv=parseInt($('sl-spn').value);
+  const sv=parseInt($('sl-spn').value);   // -4 to +4
   const bv=parseInt($('sl-bias').value);
-  S.spin=sv/100;S.bias=bv/50;
+  S.spin = sv / 4;   // normalise to -1…+1 for physics
+  S.bias = bv / 50;
   $('sv-spd').textContent=S.speed<0.28?'SLOW':S.speed<0.72?'MED':'FAST';
-  let st='NONE';if(sv>5)st='R'+sv;if(sv<-5)st='L'+Math.abs(sv);
-  $('sv-spn').textContent=st;
+  const spinLabels={
+    '-4':'2 tips L', '-3':'1½ tips L', '-2':'1 tip L', '-1':'½ tip L',
+    '0':'center',
+    '1':'½ tip R',   '2':'1 tip R',   '3':'1½ tips R', '4':'2 tips R'
+  };
+  $('sv-spn').textContent = spinLabels[String(sv)];
   let bt='NEUTRAL';if(bv>3)bt='LONG+'+bv;if(bv<-3)bt='SHORT'+bv;
   $('sv-bias').textContent=bt;
   render();

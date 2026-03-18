@@ -415,7 +415,7 @@ function reboundVec(dx, dy, rail, k) {
   // Running english = spin matching rebound direction along rail = opens angle
   // Use rebound along-rail component (rdx for horiz, rdy for vert)
   const alongSign = (rail==='top'||rail==='bottom') ? Math.sign(rdx) : Math.sign(rdy);
-  const a=Math.atan2(rdy,rdx) + S.spin*0.18*alongSign;
+  const a=Math.atan2(rdy,rdx) - S.spin*0.18*alongSign;
   return {dx:Math.cos(a),dy:Math.sin(a)};
 }
 

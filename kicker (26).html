@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kicker">
+<title>LeStar Z's Kicker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,900&family=Playfair+Display:ital,wght@1,700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+button{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;outline:none;}
+html,body{background:#141414;font-family:'Lato',sans-serif;display:flex;flex-direction:column;align-items:center;padding:12px 8px 32px;min-height:100vh;}
+#app{background:#1a361a;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.7);width:100%;max-width:700px;padding:14px 12px 16px;border:2px solid #2a4e2a;display:flex;flex-direction:column;}
+
+/* ── HEADER / LOGO ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.07);}
+h1{display:flex;align-items:center;justify-content:center;line-height:1;margin-bottom:3px;}
+.t-lestar{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(11px,3vw,16px);color:#f0df70;}
+.t-z{font-family:'Lato',sans-serif;font-style:italic;font-weight:900;font-size:clamp(20px,5.5vw,30px);color:#f0df70;line-height:1;display:inline-flex;align-items:center;margin:0 1px 0 2px;}
+.t-rest{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:clamp(11px,3vw,16px);color:#f0df70;}
+.sub{font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:0.07em;}
+#help-btn{flex-shrink:0;width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);font-family:'Lato',sans-serif;font-size:14px;font-weight:900;cursor:pointer;line-height:1;}
+/* Info overlay (full-screen) */
+#info-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:100;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 20px 20px;overflow-y:auto;}
+#info-overlay.open{display:flex;}
+#info-inner{background:#1a361a;border:2px solid #2a4e2a;border-radius:10px;width:100%;max-width:560px;padding:20px 18px 24px;position:relative;}
+#info-close{position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:22px;cursor:pointer;line-height:1;font-family:'Lato',sans-serif;}
+#info-inner h2{font-family:'Playfair Display',serif;font-style:italic;color:#f0df70;font-size:1.2rem;margin-bottom:12px;}
+#info-inner p{font-size:0.78rem;color:rgba(255,255,255,0.88);line-height:1.7;margin-bottom:10px;}
+#info-inner p:last-child{margin-bottom:0;}
+#info-inner p.intro{font-size:0.82rem;color:#ffffff;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.12);}
+#info-inner strong{color:#f0df70;}
+
+/* ── TABLE ── */
+#table-wrap{position:relative;width:100%;padding:4px 0 4px;background:transparent;}
+#tbl{width:100%;height:auto;display:block;touch-action:none;-webkit-user-select:none;user-select:none;}
+
+/* ── ACTION BUTTONS — Banker tog style ── */
+#rail-row{display:flex;gap:5px;padding:6px 0 4px;margin-bottom:2px;}
+#rail-row button{flex:1;min-width:0;height:24px;border-radius:6px;border:none;outline:none;font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:1px;cursor:pointer;text-transform:uppercase;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f0df70;color:#1a1400;-webkit-tap-highlight-color:transparent;}
+
+/* ── SLIDERS ── */
+.sgroup{background:rgba(0,0,0,0.18);border-radius:7px;padding:7px 10px 6px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.07);}
+.sgroup-title{font-size:9px;font-weight:700;letter-spacing:0.13em;text-transform:uppercase;color:#ddd;margin-bottom:6px;}
+.srow{display:flex;align-items:center;gap:8px;}
+.slbl{font-size:11px;color:#e8e8e8;min-width:52px;font-weight:700;}
+.sval{font-size:15px;font-weight:900;min-width:62px;text-align:right;white-space:nowrap;color:#f0df70;}
+input[type=range]{flex:1;-webkit-appearance:none;height:5px;background:rgba(255,255,255,0.15);border-radius:3px;outline:none;touch-action:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid #1a361a;box-shadow:0 1px 5px rgba(0,0,0,0.5);}
+#sl-spd::-webkit-slider-thumb{background:#f0df70;}
+#sl-spn::-webkit-slider-thumb{background:#e870b0;}
+#sl-bias::-webkit-slider-thumb{background:#c890f0;}
+
+/* ── READOUTS ── */
+#readouts{padding:0 2px 4px;background:transparent;}
+.seg-block{border-left:3px solid #444;padding-left:9px;margin:6px 0 2px;}
+.seg-hdr{font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;padding:5px 0 2px;}
+.ro-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.06);}
+.ro-row:last-child{border-bottom:none;}
+.ro-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.4);}
+.ro-val{font-size:15px;font-weight:900;font-family:'Lato',sans-serif;text-align:right;max-width:65%;}
+
+/* ── BOUNCE METRICS ── */
+#contact-wrap{width:100%;background:rgba(0,0,0,0.28);border-radius:4px;overflow:hidden;}
+#contact-svg{width:100%;height:auto;display:block;}
+#contact-pills{display:flex;gap:4px;padding:5px 0 3px;justify-content:flex-start;}
+.cpill{height:24px;padding:0 8px;border-radius:6px;border:none;font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:1px;cursor:pointer;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;background:rgba(240,223,112,0.22);color:rgba(240,223,112,0.6);-webkit-tap-highlight-color:transparent;outline:none;}
+.cpill.active{background:#f0df70;color:#1a1a1a;}
+
+/* ── CALIBRATION ── */
+#cal-panel{display:none;width:100%;background:rgba(0,0,0,0.25);border:1px solid #4ade80;border-radius:6px;padding:12px 12px 14px;margin-bottom:6px;}
+#cal-panel.open{display:block;}
+#cal-instruction{font-size:12px;color:#ffffff;font-weight:700;margin-bottom:8px;line-height:1.55;}
+#cal-status{font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:0.05em;margin-bottom:8px;text-transform:uppercase;}
+.cal-shots{display:flex;gap:8px;margin-bottom:10px;}
+.cal-shot-dot{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.08);}
+.cal-shot-dot.done{background:#4ade80;border-color:#4ade80;}
+.cal-actions{display:flex;gap:6px;margin-bottom:6px;}
+.cal-action-btn{flex:1;padding:8px 4px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.06);color:#fff;font-family:'Lato',sans-serif;font-size:10px;font-weight:900;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;}
+.cal-action-btn.primary{background:rgba(74,222,128,0.15);border-color:#4ade80;color:#4ade80;}
+.cal-action-btn.danger{background:rgba(255,80,80,0.1);border-color:rgba(255,80,80,0.4);color:#ff8080;}
+#cal-result{font-size:11px;color:#88ee88;margin-top:6px;display:none;line-height:1.65;}
+
+/* ── INSTRUCTIONS ── */
+footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:10px 8px 4px;letter-spacing:1.5px;text-transform:uppercase;margin-top:auto;}
+
+@media (orientation: landscape) {
+  #app, .card { max-width: 100% !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header>
+<div class="hdr">
+  <button id="help-btn" onclick="toggleInfo()">?</button>
+  <div style="text-align:center;flex:1;padding:0 8px;">
+    <h1><span class="t-lestar">LeStar&nbsp;</span><span class="t-z">Z</span><span class="t-rest">'s Kicker</span></h1>
+    <p class="sub">place the cue ball · aim for a rail · see where it ends up</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0;">
+    <button id="table-btn" onclick="toggleTable()" style="padding:4px 10px;border-radius:14px;border:2px solid rgba(160,208,160,0.4);background:rgba(160,208,160,0.08);color:#a0d0a0;font-family:'Lato',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;cursor:pointer;white-space:nowrap;">POOL</button>
+    <div style="display:flex;gap:3px;">
+      <button id="size-btn" onclick="cycleTableSize()" style="padding:3px 8px;border-radius:10px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:10px;font-weight:900;cursor:pointer;">9ft</button>
+      <button id="unit-btn" onclick="toggleUnits()" style="padding:3px 8px;border-radius:10px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:10px;font-weight:900;cursor:pointer;">FT</button>
+    </div>
+  </div>
+</div>
+</header>
+
+<!-- ── INFO OVERLAY ── -->
+<div id="info-overlay">
+  <div id="info-inner">
+    <button id="info-close" onclick="toggleInfo()">✕</button>
+    <h2>LeStar Z's Kicker</h2>
+    <p class="intro">This Kicker, like all of the LeStar Z apps, is designed to help you learn. You can't use it in games, but you can take the knowledge you gain from it to those games. To use it effectively:</p>
+    <ol style="color:rgba(255,255,255,0.88);font-size:0.82rem;line-height:1.8;padding-left:1.4em;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.12);">
+      <li>Put your phone with the app showing on the table.</li>
+      <li>Set the cue ball on the table and on the app to about the same position.</li>
+      <li>Choose a desired point on the table that the cue ball needs to go — to pocket an object ball, to kick an opponent's ball away, to play a safe.</li>
+      <li>Then add as many rails as necessary for the cue ball to get to that position.</li>
+      <li>Grab the endpoint of the last segment.</li>
+      <li>Put it on the target location.</li>
+      <li>The diagram will show you the path.</li>
+      <li>The readouts will tell you the speed and spin you need to get there.</li>
+      <li>Experiment and see if you can adjust yourself and the bias slider so that you can consistently calculate the shot.</li>
+    </ol>
+    <p><strong>AIM HANDLE (gold ●):</strong> Drag the white cue ball to your position on the table. Drag the gold handle to set your aim direction. The gold line shows the ball's path to the first rail contact.</p>
+    <p><strong>BOUNCE CHAIN:</strong> Each rail contact continues in a new color — blue, red, green, violet. Use ＋ ADD RAIL to extend the chain up to 5 rails; － REMOVE RAIL to trim it back.</p>
+    <p><strong>ENDPOINT HANDLE (white ●):</strong> The white dot at the end of the last segment is draggable. Pull it to any spot on the table and the app reverse-solves the aim angle to deliver the ball there. All segments update live. This answers "how do I aim to get it there?"</p>
+    <p><strong>ROTATE ⟳:</strong> The button on the table corner cycles through 0° / 90° / 180° / 270°. Useful for matching the table orientation to your view at the table. All dragging works at every rotation.</p>
+    <p><strong>SPEED:</strong> Controls rail compression. Faster shots produce a shallower rebound angle. Set this to match your intended shot power.</p>
+    <p><strong>SPIN:</strong> Right english (R) opens the rebound angle after contact; left english (L) closes it. Set spin after locking in the basic aim.</p>
+    <p><strong>BIAS:</strong> Accounts for your specific table's rail personality. Some tables play long; some play short. Adjust after observing a few real shots on your table.</p>
+    <p><strong>POOL / SNOOKER:</strong> Snooker tables are larger and the cushions play slightly truer — less compression at the same speed. The toggle adjusts the physics and labels the readouts accordingly.</p>
+    <p><strong>DIAMONDS:</strong> The standard diamond reference system. 0 at each corner, 4 at the side pockets on long rails, 1–3 in between. A readout of TOP ◆ 2.50 means halfway between diamonds 2 and 3 on the top rail.</p>
+  </div>
+</div>
+
+<div id="table-wrap">
+<svg id="tbl" viewBox="0 0 460 260" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="gFelt" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="#1e6b35"/><stop offset="100%" stop-color="#134d25"/></radialGradient>
+  <radialGradient id="gPocket" cx="35%" cy="35%" r="70%"><stop offset="0%" stop-color="#1a1a1a"/><stop offset="100%" stop-color="#050a05"/></radialGradient>
+  <radialGradient id="gBall" cx="35%" cy="30%" r="65%"><stop offset="0%" stop-color="#ffffff"/><stop offset="60%" stop-color="#f0f0e8"/><stop offset="100%" stop-color="#d8d8d0"/></radialGradient>
+  <marker id="arr0" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#f0df70"/></marker>
+  <marker id="arr1" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#7dd3fc"/></marker>
+  <marker id="arr2" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#f87171"/></marker>
+  <marker id="arr3" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#4ade80"/></marker>
+  <marker id="arr4" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#e879f9"/></marker>
+</defs>
+
+<g id="tbl-content">
+<rect x="0" y="0" width="460" height="260" rx="9" fill="#3d2b1f"/>
+<rect x="1.5" y="1.5" width="457" height="257" rx="8" fill="none" stroke="#5a3f2c" stroke-width="2"/>
+<!-- Cushion strips -->
+<rect x="30"  y="17"  width="400" height="13" fill="#1a6830"/>
+<rect x="30"  y="230" width="400" height="13" fill="#1a6830"/>
+<rect x="17"  y="30"  width="13"  height="200" fill="#1a6830"/>
+<rect x="430" y="30"  width="13"  height="200" fill="#1a6830"/>
+<!-- Felt -->
+<rect x="30" y="30" width="400" height="200" fill="url(#gFelt)"/>
+<rect x="30" y="30" width="400" height="200" fill="none" stroke="#0f3d1c" stroke-width="1.5"/>
+<!-- Corner pockets -->
+<circle cx="30"  cy="30"  r="17" fill="#060a06"/>
+<circle cx="430" cy="30"  r="17" fill="#060a06"/>
+<circle cx="30"  cy="230" r="17" fill="#060a06"/>
+<circle cx="430" cy="230" r="17" fill="#060a06"/>
+<!-- Side pockets — tapered jaws, rounded back -->
+<path d="M 210,30 L 215,16 A 15,9 0 0 1 245,16 L 250,30 Z" fill="#060a06"/>
+<path d="M 210,230 L 215,244 A 15,9 0 0 0 245,244 L 250,230 Z" fill="#060a06"/>
+<polygon points="80,7 84,12 80,17 76,12"     fill="#c8a84b"/>
+<polygon points="130,7 134,12 130,17 126,12"  fill="#c8a84b"/>
+<polygon points="180,7 184,12 180,17 176,12"  fill="#c8a84b"/>
+<polygon points="280,7 284,12 280,17 276,12"  fill="#c8a84b"/>
+<polygon points="330,7 334,12 330,17 326,12"  fill="#c8a84b"/>
+<polygon points="380,7 384,12 380,17 376,12"  fill="#c8a84b"/>
+<polygon points="80,243 84,248 80,253 76,248"   fill="#c8a84b"/>
+<polygon points="130,243 134,248 130,253 126,248" fill="#c8a84b"/>
+<polygon points="180,243 184,248 180,253 176,248" fill="#c8a84b"/>
+<polygon points="280,243 284,248 280,253 276,248" fill="#c8a84b"/>
+<polygon points="330,243 334,248 330,253 326,248" fill="#c8a84b"/>
+<polygon points="380,243 384,248 380,253 376,248" fill="#c8a84b"/>
+<polygon points="7,80 12,76 17,80 12,84"     fill="#c8a84b"/>
+<polygon points="7,130 12,126 17,130 12,134" fill="#c8a84b"/>
+<polygon points="7,180 12,176 17,180 12,184" fill="#c8a84b"/>
+<polygon points="443,80 448,76 453,80 448,84"   fill="#c8a84b"/>
+<polygon points="443,130 448,126 453,130 448,134" fill="#c8a84b"/>
+<polygon points="443,180 448,176 453,180 448,184" fill="#c8a84b"/>
+<text x="80"  y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">1</text>
+<text x="130" y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">2</text>
+<text x="180" y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">3</text>
+<text x="280" y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">5</text>
+<text x="330" y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">6</text>
+<text x="380" y="5"   text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">7</text>
+<text x="80"  y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">1</text>
+<text x="130" y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">2</text>
+<text x="180" y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">3</text>
+<text x="280" y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">5</text>
+<text x="330" y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">6</text>
+<text x="380" y="259" text-anchor="middle" fill="#907020" font-size="7" font-family="Helvetica">7</text>
+<text x="3"   y="83"  fill="#907020" font-size="7" font-family="Helvetica">1</text>
+<text x="3"   y="133" fill="#907020" font-size="7" font-family="Helvetica">2</text>
+<text x="3"   y="183" fill="#907020" font-size="7" font-family="Helvetica">3</text>
+<text x="452" y="83"  fill="#907020" font-size="7" font-family="Helvetica">1</text>
+<text x="452" y="133" fill="#907020" font-size="7" font-family="Helvetica">2</text>
+<text x="452" y="183" fill="#907020" font-size="7" font-family="Helvetica">3</text>
+<text x="30"  y="23"  text-anchor="middle" fill="#604a14" font-size="6.5" font-family="Helvetica">0</text>
+<text x="430" y="23"  text-anchor="middle" fill="#604a14" font-size="6.5" font-family="Helvetica">8</text>
+<text x="230" y="23"  text-anchor="middle" fill="#604a14" font-size="6.5" font-family="Helvetica">4</text>
+<text x="6"   y="32"  fill="#604a14" font-size="6.5" font-family="Helvetica">0</text>
+<text x="6"   y="232" fill="#604a14" font-size="6.5" font-family="Helvetica">4</text>
+
+<g id="map-layer" opacity="1" style="pointer-events:none">
+  <text x="230" y="43" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#7dd3fc" letter-spacing="2">TOP</text>
+  <text x="230" y="224" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#7dd3fc" letter-spacing="2">BTM</text>
+  <text x="40" y="132" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#7dd3fc" letter-spacing="2" transform="rotate(-90,40,132)">LFT</text>
+  <text x="420" y="132" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#7dd3fc" letter-spacing="2" transform="rotate(90,420,132)">RGT</text>
+  <line x1="80"  y1="30" x2="80"  y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="130" y1="30" x2="130" y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="180" y1="30" x2="180" y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="230" y1="30" x2="230" y2="230" stroke="#7dd3fc" stroke-width="1.2" opacity="0.75"/>
+  <line x1="280" y1="30" x2="280" y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="330" y1="30" x2="330" y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="380" y1="30" x2="380" y2="230" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="30" y1="80"  x2="430" y2="80"  stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <line x1="30" y1="130" x2="430" y2="130" stroke="#7dd3fc" stroke-width="1.2" opacity="0.75"/>
+  <line x1="30" y1="180" x2="430" y2="180" stroke="#7dd3fc" stroke-width="0.8" opacity="0.55"/>
+  <circle cx="230" cy="130" r="3" fill="none" stroke="#7dd3fc" stroke-width="1" opacity="0.6"/>
+  <circle cx="230" cy="130" r="0.8" fill="#7dd3fc" opacity="0.6"/>
+</g>
+<g id="dyn">
+  <!-- 5 bounce segments: gold, blue, red, green, violet -->
+  <g id="seg0" opacity="0">
+    <line   id="s0-stub" x1="0" y1="0" x2="0" y2="0" stroke="#f0df70" stroke-width="1" stroke-dasharray="3,3"/>
+    <line   id="s0-line" x1="0" y1="0" x2="0" y2="0" stroke="#f0df70" stroke-width="2.2" marker-end="url(#arr0)"/>
+    <circle id="s0-dot"  cx="0" cy="0" r="5.5" fill="none" stroke="#f0df70" stroke-width="1.8"/>
+    <circle id="s0-hdl"  cx="0" cy="0" r="10"  fill="#f0df70" stroke="#fff4" stroke-width="1.5" cursor="grab"/>
+  </g>
+  <g id="seg1" opacity="0">
+    <line   id="s1-line" x1="0" y1="0" x2="0" y2="0" stroke="#7dd3fc" stroke-width="1.9" stroke-dasharray="7,4" marker-end="url(#arr1)"/>
+    <circle id="s1-dot"  cx="0" cy="0" r="5"   fill="none" stroke="#7dd3fc" stroke-width="1.6"/>
+  </g>
+  <g id="seg2" opacity="0">
+    <line   id="s2-line" x1="0" y1="0" x2="0" y2="0" stroke="#f87171" stroke-width="1.7" stroke-dasharray="7,4" marker-end="url(#arr2)"/>
+    <circle id="s2-dot"  cx="0" cy="0" r="5"   fill="none" stroke="#f87171" stroke-width="1.6"/>
+  </g>
+  <g id="seg3" opacity="0">
+    <line   id="s3-line" x1="0" y1="0" x2="0" y2="0" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="7,4" marker-end="url(#arr3)"/>
+    <circle id="s3-dot"  cx="0" cy="0" r="5"   fill="none" stroke="#4ade80" stroke-width="1.5"/>
+  </g>
+  <g id="seg4" opacity="0">
+    <line   id="s4-line" x1="0" y1="0" x2="0" y2="0" stroke="#e879f9" stroke-width="1.3" stroke-dasharray="7,4" marker-end="url(#arr4)"/>
+    <circle id="s4-dot"  cx="0" cy="0" r="5"   fill="none" stroke="#e879f9" stroke-width="1.4"/>
+  </g>
+
+  <!-- Endpoint handle — white ring + dot at terminal point of last segment; draggable -->
+  <circle id="ep-ring" cx="0" cy="0" r="11" fill="rgba(255,255,255,.07)" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3,3" opacity="0" cursor="grab"/>
+  <circle id="ep-dot"  cx="0" cy="0" r="5"  fill="#ffffff" opacity="0" cursor="grab"/>
+  <text   id="ep-lbl"  x="0"  y="0" text-anchor="middle" fill="#ffffffaa" font-size="6.5" font-family="Helvetica" opacity="0">END</text>
+
+  <!-- Calibration markers -->
+  <circle id="cal-predicted" cx="0" cy="0" r="10" fill="none" stroke="#f0df70" stroke-width="2" stroke-dasharray="4,3" opacity="0"/>
+  <text id="cal-predicted-lbl" x="0" y="0" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#f0df70" opacity="0">PREDICTED</text>
+  <circle id="cal-actual" cx="0" cy="0" r="8" fill="#ff6060" stroke="#fff" stroke-width="1.5" opacity="0"/>
+  <text id="cal-actual-lbl" x="0" y="0" text-anchor="middle" font-family="Lato,sans-serif" font-size="7" font-weight="700" fill="#ff8080" opacity="0">ACTUAL</text>
+  <!-- Cue ball -->
+  <circle id="cb-shadow" cx="171" cy="131" r="10" fill="#000" opacity="0.32"/>
+  <circle id="cb"        cx="170" cy="130" r="10" fill="url(#gBall)" stroke="#ccccbb" stroke-width="1" cursor="grab"/>
+  <circle id="cb-hi"     cx="166" cy="126" r="3.5" fill="#ffffff" opacity="0.55"/>
+  <circle id="cb-dot"    cx="170" cy="130" r="1.5" fill="#999" opacity="0.4"/>
+</g>
+</g>
+</svg>
+</div>
+
+<!-- ── BOUNCE METRICS ── -->
+<div id="contact-pills"></div>
+<div id="contact-wrap">
+  <svg id="contact-svg" viewBox="0 0 450 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+    <rect width="450" height="150" fill="rgba(0,0,0,0.28)"/>
+  </svg>
+</div>
+
+<div id="rail-row">
+  <button id="btn-add-rail"  onclick="addRail()">＋ ADD RAIL</button>
+  <button id="btn-rem-rail"  onclick="removeRail()">－ REM RAIL</button>
+  <button id="btn-map"       onclick="toggleMap()">MAP</button>
+  <button id="btn-cal"       onclick="toggleCal()">CAL</button>
+  <button id="btn-metrics"   onclick="toggleContact()">BOUNCE</button>
+  <button id="btn-rot-ccw"   onclick="rotCCW()">◀ ROT</button>
+  <button id="btn-rot-cw"    onclick="rotCW()">ROT ▶</button>
+</div>
+
+<!-- ── CALIBRATION PANEL ── -->
+<div id="cal-panel">
+  <div id="cal-instruction"></div>
+  <div id="cal-status"></div>
+  <div class="cal-shots">
+    <div class="cal-shot-dot" id="csd-0"></div>
+    <div class="cal-shot-dot" id="csd-1"></div>
+    <div class="cal-shot-dot" id="csd-2"></div>
+    <div class="cal-shot-dot" id="csd-3"></div>
+    <div class="cal-shot-dot" id="csd-4"></div>
+  </div>
+  <div class="cal-actions">
+    <button class="cal-action-btn primary" id="cal-shoot-btn" onclick="calShoot()">SHOOT →</button>
+    <button class="cal-action-btn" onclick="calUndo()">UNDO</button>
+    <button class="cal-action-btn danger" onclick="calReset()">RESET</button>
+  </div>
+  <div id="cal-result"></div>
+</div>
+
+<div class="sgroup">
+  <div class="sgroup-title">SPEED &amp; SPIN</div>
+  <div class="srow">
+    <span class="slbl">SPEED</span>
+    <input type="range" id="sl-spd" min="0" max="100" value="50" oninput="onSliders()">
+    <span class="sval" id="sv-spd">med</span>
+  </div>
+  <div class="srow" style="margin-top:6px;">
+    <span class="slbl">SPIN</span>
+    <input type="range" id="sl-spn" min="-4" max="4" value="0" step="1" oninput="onSliders()">
+    <span class="sval" id="sv-spn">center</span>
+  </div>
+  <div class="srow" style="margin-top:6px;">
+    <span class="slbl">BIAS</span>
+    <input type="range" id="sl-bias" min="-50" max="50" value="0" oninput="onSliders()">
+    <span class="sval" id="sv-bias">neutral</span>
+  </div>
+</div>
+
+<div id="readouts"></div>
+
+<footer>LeStar Z Pool Suite · Zukemeister · zukemeister.github.io</footer>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+const TL = { left:30, right:430, top:30, bottom:230 };
+const DU = 50;
+const BALL_R  = 10;
+const HDL_D   = 72;
+const MAX_RAILS = 5;
+const SEG_COLORS = ['#f0df70','#7dd3fc','#f87171','#4ade80','#e879f9'];
+const SEG_NAMES  = ['1ST RAIL','2ND RAIL','3RD RAIL','4TH RAIL','5TH RAIL'];
+const RAIL_SHORT = { top:'TOP', bottom:'BTM', left:'LFT', right:'RGT' };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const S = {
+  cb:        { x:170, y:130 },
+  aimAngle:  -0.65,
+  numRails:  1,
+  speed:     0.5,
+  spin:      0,
+  bias:      0,
+  snooker:   false,
+  rotation:  0,
+  selectedContact: 0,
+  contactOn: true,
+  mapOn: true,
+  tableSize: 9,
+  metric: false,
+};
+let drag = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHYSICS
+// ─────────────────────────────────────────────────────────────────────────────
+function kFactor() {
+  // Snooker: cushions play truer — base compression is higher (+0.06)
+  const base = S.snooker ? 0.97 : 0.95;
+  return Math.max(0.45, Math.min(0.99, (base - S.speed*0.22) + S.bias*0.12 + (typeof tableK !== 'undefined' ? tableK : 0)));
+}
+
+function rayHit(px, py, dx, dy, excludeRail) {
+  const rails=[
+    {name:'top',    h:true,  v:TL.top   },
+    {name:'bottom', h:true,  v:TL.bottom},
+    {name:'left',   h:false, v:TL.left  },
+    {name:'right',  h:false, v:TL.right },
+  ];
+  let best=null;
+  for(const r of rails){
+    if(r.name===excludeRail) continue;
+    let t,ix,iy;
+    if(r.h){
+      if(Math.abs(dy)<1e-9) continue;
+      t=(r.v-py)/dy; if(t<0.5) continue;
+      ix=px+t*dx; iy=r.v;
+      if(ix<TL.left-0.5||ix>TL.right+0.5) continue;
+    } else {
+      if(Math.abs(dx)<1e-9) continue;
+      t=(r.v-px)/dx; if(t<0.5) continue;
+      ix=r.v; iy=py+t*dy;
+      if(iy<TL.top-0.5||iy>TL.bottom+0.5) continue;
+    }
+    if(!best||t<best.t) best={t,x:ix,y:iy,rail:r.name};
+  }
+  return best;
+}
+
+function reboundVec(dx, dy, rail, k) {
+  let rdx,rdy;
+  // k scales the along-rail component — higher k = wider rebound = angle opens
+  if(rail==='top'||rail==='bottom'){rdx=dx*k;rdy=-dy;}
+  else{rdx=-dx;rdy=dy*k;}
+  // Running english = spin matching rebound direction along rail = opens angle
+  // Use rebound along-rail component (rdx for horiz, rdy for vert)
+  const alongSign = (rail==='top'||rail==='bottom') ? Math.sign(rdx) : Math.sign(rdy);
+  const a=Math.atan2(rdy,rdx) - S.spin*0.18*alongSign;
+  return {dx:Math.cos(a),dy:Math.sin(a)};
+}
+
+function computeSegs(aimAngle, n) {
+  const k=kFactor();
+  let px=S.cb.x,py=S.cb.y;
+  let dx=Math.cos(aimAngle),dy=Math.sin(aimAngle);
+  let lastRail=null;
+  const segs=[];
+  for(let i=0;i<n;i++){
+    const hit=rayHit(px,py,dx,dy,lastRail);
+    if(!hit) break;
+    const rb=reboundVec(dx,dy,hit.rail,k);
+    segs.push({from:{x:px,y:py},to:{x:hit.x,y:hit.y},rail:hit.rail,inDx:dx,inDy:dy,rb});
+    px=hit.x;py=hit.y;dx=rb.dx;dy=rb.dy;lastRail=hit.rail;
+  }
+  return segs;
+}
+
+function terminalPt(aimAngle) {
+  const segs=computeSegs(aimAngle,S.numRails);
+  return segs.length>0 ? segs[segs.length-1].to : null;
+}
+
+// Newton-step solver: one gradient step per drag frame toward target.
+// Computes how the terminal point moves per radian of aim change,
+// then steps the aim angle in that direction. No wide scanning = no jumps.
+function solveAngle(tx, ty) {
+  const a   = S.aimAngle;
+  const eps = 0.003;  // ~0.17° for numerical gradient
+
+  const tp  = terminalPt(a);
+  const tp2 = terminalPt(a + eps);
+  if (!tp || !tp2) return a;
+
+  // Rate of change of terminal point per radian
+  const dtx = (tp2.x - tp.x) / eps;
+  const dty = (tp2.y - tp.y) / eps;
+
+  // Error vector: how far terminal is from finger
+  const ex = tx - tp.x;
+  const ey = ty - tp.y;
+
+  // Least-squares step along gradient
+  const denom = dtx*dtx + dty*dty;
+  if (denom < 0.01) return a;
+
+  const da = (dtx*ex + dty*ey) / denom;
+
+  // Clamp step to ±8° per frame so it can't teleport
+  const MAX_STEP = 0.14;
+  return a + Math.max(-MAX_STEP, Math.min(MAX_STEP, da));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function toDiamond(x,y,rail){
+  return (rail==='top'||rail==='bottom') ? ((x-TL.left)/DU).toFixed(2) : ((y-TL.top)/DU).toFixed(2);
+}
+function fmtAngle(rad){
+  let d=(rad*180/Math.PI)%360;
+  if(d>180)d-=360;if(d<-180)d+=360;
+  return d.toFixed(1)+'°';
+}
+function angleFromRail(dx, dy, rail){
+  let deg;
+  if(rail==='top'||rail==='bottom') deg=Math.abs(Math.atan2(Math.abs(dy),Math.abs(dx))*180/Math.PI);
+  else deg=Math.abs(Math.atan2(Math.abs(dx),Math.abs(dy))*180/Math.PI);
+  return deg.toFixed(1);
+}
+function rebAngle(seg){
+  return angleFromRail(seg.inDx, seg.inDy, seg.rail)+'°';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// READOUTS
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPills() {
+  const pillEl = $('contact-pills');
+  if (!pillEl) return;
+  let ph = '';
+  for (let i=0; i<S.numRails; i++) {
+    const active = i === S.selectedContact;
+    ph += `<button class="cpill${active?' active':''}" onclick="selectContact(${i})">${SEG_NAMES[i].replace(' RAIL','')}</button>`;
+  }
+  pillEl.innerHTML = ph;
+  pillEl.style.display = 'flex';
+}
+
+function buildReadouts(){
+  const el=document.getElementById('readouts');
+  const tableLabel = S.snooker
+    ? `<div style="font-size:9px;font-weight:900;letter-spacing:2px;color:#70c0f0;text-transform:uppercase;padding:4px 2px 6px;">⬡ SNOOKER TABLE — truer cushions</div>`
+    : `<div style="font-size:9px;font-weight:900;letter-spacing:2px;color:#a0d0a0;text-transform:uppercase;padding:4px 2px 6px;">⬡ POOL TABLE</div>`;
+  let html=tableLabel;
+  for(let i=0;i<S.numRails;i++){
+    const c=SEG_COLORS[i];
+    html+=`<div class="seg-block" style="border-color:${c}">
+      <div class="seg-hdr" style="color:${c}">${SEG_NAMES[i]}</div>
+      <div class="ro-row"><span class="ro-lbl">INCOMING ANGLE</span><span class="ro-val" id="rd${i}-app" style="color:${c}">—</span></div>
+      <div class="ro-row" id="rd${i}-reb-row"><span class="ro-lbl">OUTGOING ANGLE</span><span class="ro-val" id="rd${i}-reb" style="color:${c}">—</span></div>
+      <div class="ro-row"><span class="ro-lbl">CONTACT RAIL ◆ DIAMOND</span><span class="ro-val" id="rd${i}-con" style="color:${c}">—</span></div>
+      <div class="ro-row"><span class="ro-lbl">CONTINUES TO</span><span class="ro-val" id="rd${i}-nxt" style="color:${c}">—</span></div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SVG HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+function sL(id,x1,y1,x2,y2){const e=$(id);if(!e)return;e.setAttribute('x1',x1);e.setAttribute('y1',y1);e.setAttribute('x2',x2);e.setAttribute('y2',y2);}
+function sC(id,cx,cy){const e=$(id);if(!e)return;e.setAttribute('cx',cx);e.setAttribute('cy',cy);}
+function sV(id,v){const e=$(id);if(e)e.style.opacity=v?'1':'0';}
+function sT(id,v){const e=$(id);if(e)e.textContent=v;}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────────────────────
+function render(){
+  const{cb,aimAngle,numRails}=S;
+
+  sC('cb',        cb.x,    cb.y);
+  sC('cb-shadow', cb.x+1.5,cb.y+2);
+  sC('cb-hi',     cb.x-3.5,cb.y-3.5);
+  sC('cb-dot',    cb.x,    cb.y);
+
+  for(let i=0;i<MAX_RAILS;i++) sV('seg'+i,false);
+  sV('ep-ring',false);sV('ep-dot',false);sV('ep-lbl',false);
+
+
+  const segs=computeSegs(aimAngle,numRails);
+
+  // Aim handle (always gold / seg0)
+  const hx=cb.x+HDL_D*Math.cos(aimAngle);
+  const hy=cb.y+HDL_D*Math.sin(aimAngle);
+  sC('s0-hdl',hx,hy);
+  sV('seg0',true);
+
+  if (segs.length > 0) { sL('s0-stub',cb.x,cb.y,hx,hy); }
+  else { sL('s0-stub',0,0,0,0); }
+
+  segs.forEach((seg,i)=>{
+    const fx=i===0?cb.x+Math.cos(aimAngle)*(BALL_R+2):seg.from.x;
+    const fy=i===0?cb.y+Math.sin(aimAngle)*(BALL_R+2):seg.from.y;
+    sL(`s${i}-line`,fx,fy,seg.to.x,seg.to.y);
+    sC(`s${i}-dot`,seg.to.x,seg.to.y);
+    sV('seg'+i,true);
+
+    sT(`rd${i}-con`, RAIL_SHORT[seg.rail]+' ◆ '+toDiamond(seg.to.x,seg.to.y,seg.rail));
+    sT(`rd${i}-nxt`, i+1<segs.length ? RAIL_SHORT[segs[i+1].rail]+' rail' : '↗ open table');
+    sT(`rd${i}-app`, angleFromRail(seg.inDx, seg.inDy, seg.rail)+'°');
+    const rebRow = $(`rd${i}-reb-row`);
+    if (i+1 < segs.length) {
+      if (rebRow) rebRow.style.display = '';
+      sT(`rd${i}-reb`, angleFromRail(seg.rb.dx, seg.rb.dy, seg.rail)+'°');
+    } else {
+      if (rebRow) rebRow.style.display = 'none';
+    }
+  });
+  for(let i=segs.length;i<numRails;i++){
+    sT(`rd${i}-aim`,'—');sT(`rd${i}-con`,'—');sT(`rd${i}-nxt`,'—');sT(`rd${i}-reb`,'—');
+  }
+
+  if(segs.length>0){
+    const last=segs[segs.length-1].to;
+    sC('ep-ring',last.x,last.y);
+    sC('ep-dot', last.x,last.y);
+    $('ep-lbl').setAttribute('x',last.x);
+    $('ep-lbl').setAttribute('y',last.y-15);
+    sV('ep-ring',true);sV('ep-dot',true);sV('ep-lbl',true);
+  }
+  if (S.selectedContact >= segs.length) S.selectedContact = Math.max(0, segs.length-1);
+  if (S.contactOn) drawContact(segs);
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOUNCE METRICS
+// ─────────────────────────────────────────────────────────────────────────────
+function drawContact(segs) {
+  const W=280, H=150, TW=450;  // TW = total viewBox width, ball drawn right of W
+  const pillEl = $('contact-pills');
+  const svg    = $('contact-svg');
+  if (!svg) return;
+
+  if (pillEl) {
+    let ph = '';
+    for (let i=0; i<segs.length; i++) {
+      const col = SEG_COLORS[i];
+      const active = i === S.selectedContact;
+      ph += `<button class="cpill${active?' active':''}" onclick="selectContact(${i})">${SEG_NAMES[i].replace(' RAIL','')}</button>`;
+    }
+    pillEl.innerHTML = ph;
+    pillEl.style.display = 'flex';
+  }
+
+  svg.setAttribute('viewBox', `0 0 ${TW} ${H}`);
+
+  if (segs.length === 0) {
+    svg.innerHTML = `<rect width="${TW}" height="${H}" fill="rgba(0,0,0,0.28)"/>
+      <text x="${W/2}" y="${H/2+5}" text-anchor="middle" font-family="Lato,sans-serif" font-size="13" font-weight="700" fill="rgba(255,255,255,0.25)">Aim to see bounce metrics</text>`;
+    return;
+  }
+
+  const idx    = Math.min(S.selectedContact, segs.length-1);
+  const seg    = segs[idx];
+  const inCol  = SEG_COLORS[idx];
+  const outCol = idx+1 < segs.length ? SEG_COLORS[idx+1] : '#aaaaaa';
+  const isLast = idx+1 >= segs.length;
+  const rail   = seg.rail;
+  const horiz  = (rail === 'top' || rail === 'bottom');
+  const cy = H - 16;  // cushion flush to bottom
+  const cx = W / 2;
+  const RAY = 115;
+
+  let inAlong, inInto, rbAlong, rbInto;
+  if (horiz) {
+    // Top/bottom rails: along=x, into=y
+    inAlong=seg.inDx;  inInto=seg.inDy;
+    rbAlong=seg.rb.dx; rbInto=seg.rb.dy;
+  } else {
+    // Left/right rails: along=y, into=x
+    // Negate along for right rail so diagram reads consistently left=low diamond, right=high diamond
+    const sign = (rail==='right') ? 1 : -1;
+    inAlong=seg.inDy*sign;  inInto=seg.inDx;
+    rbAlong=seg.rb.dy*sign; rbInto=seg.rb.dx;
+  }
+
+  // Force inInto > 0 (ball arrives from above cushion in diagram)
+  if (inInto < 0) { inInto=-inInto; inAlong=-inAlong; }
+  // Force rebound away from cushion (rbInto < 0 = upward)
+  if (rbInto > 0) { rbInto=-rbInto; rbAlong=-rbAlong; }
+  // Left and right rails: flip horizontal direction 180°
+  if (!horiz) { inAlong=-inAlong; rbAlong=-rbAlong; }
+
+  const inLen=Math.hypot(inAlong,inInto), rbLen=Math.hypot(rbAlong,rbInto);
+  const inNx=inAlong/inLen, inNy=inInto/inLen;
+  const rbNx=rbAlong/rbLen, rbNy=rbInto/rbLen;
+
+  const ax=cx-inNx*RAY, ay=cy-inNy*RAY;
+  const rx=cx+rbNx*RAY, ry=cy+rbNy*RAY;
+
+  // Same source as chart — angleFromRail for both in and out
+  const approachDeg = angleFromRail(seg.inDx, seg.inDy, rail);
+  const rebDeg      = angleFromRail(seg.rb.dx, seg.rb.dy, rail);
+
+  const RAIL_LONG = {top:'TOP RAIL',bottom:'BTM RAIL',left:'LFT RAIL',right:'RGT RAIL'};
+  const diamond   = toDiamond(seg.to.x, seg.to.y, rail);
+
+  let out = `<rect width="${W}" height="${H}" fill="rgba(0,0,0,0.35)"/>`;
+  out += `<rect x="0" y="0" width="${W}" height="${cy}" fill="rgba(26,80,40,0.5)"/>`;
+  out += `<rect x="0" y="${cy}" width="${W}" height="${H-cy}" fill="#1a6830"/>`;
+  out += `<circle cx="${cx}" cy="${cy+8}" r="10" fill="none" stroke="#ffffff" stroke-width="2.5"/>`;
+  out += `<circle cx="${cx}" cy="${cy+8}" r="3" fill="#ffffff"/>`;
+  out += `<line x1="${ax}" y1="${ay}" x2="${cx}" y2="${cy}" stroke="${inCol}" stroke-width="3" stroke-dasharray="8,4"/>`;
+  out += `<circle cx="${ax}" cy="${ay}" r="7" fill="${inCol}"/>`;
+  const rebOp=isLast?'0.40':'0.9', rebStr=isLast?'#888888':outCol;
+  out += `<line x1="${cx}" y1="${cy}" x2="${rx}" y2="${ry}" stroke="${rebStr}" stroke-width="${isLast?2:3}" stroke-dasharray="8,4" opacity="${rebOp}"/>`;
+
+  // Smart corners: IN corner follows incoming dot side, OUT gets the other corner
+  const inOnRight = ax >= W/2;
+  const inX  = inOnRight ? W-8 : 8;
+  const outX = inOnRight ? 8   : W-8;
+  const inAnchor  = inOnRight ? 'end'   : 'start';
+  const outAnchor = inOnRight ? 'start' : 'end';
+
+  out += `<text x="${inX}" y="18" text-anchor="${inAnchor}" font-family="Lato,sans-serif" font-size="10" font-weight="900" letter-spacing="2" fill="${inCol}">IN</text>`;
+  out += `<text x="${inX}" y="40" text-anchor="${inAnchor}" font-family="Lato,sans-serif" font-size="22" font-weight="700" fill="#ffffff">${rebDeg}°</text>`;
+
+  if (!isLast) {
+    out += `<text x="${outX}" y="18" text-anchor="${outAnchor}" font-family="Lato,sans-serif" font-size="10" font-weight="900" letter-spacing="2" fill="${outCol}">OUT</text>`;
+    out += `<text x="${outX}" y="40" text-anchor="${outAnchor}" font-family="Lato,sans-serif" font-size="22" font-weight="700" fill="#ffffff">${approachDeg}°</text>`;
+  }
+
+
+
+  out += `<text x="12" y="${cy+12}" text-anchor="start" font-family="Lato,sans-serif" font-size="11" font-weight="900" fill="#ffffff">${RAIL_LONG[rail]} ◆ ${diamond}</text>`;
+  out += `<text x="${W-8}" y="${cy+12}" text-anchor="end" font-family="Lato,sans-serif" font-size="9" font-weight="700" letter-spacing="2" fill="#c8703a" font-style="italic">BOUNCE</text>`;
+
+  // Divider between diagram and ball
+  out += `<line x1="${W}" y1="0" x2="${W}" y2="${H}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+
+  // Spin ball — fills right panel (W to TW), clipped to that region
+  const panelW = TW - W;
+  const br = Math.floor(H / 2) - 1;  // fills height
+  const bx = W + panelW / 2;
+  const by = br + 1;  // sit ball flush to top
+  const tipX = bx + S.spin * 0.62 * br;
+  const spinRaw = Math.round(S.spin * 4);
+  const spinCol = spinRaw === 0 ? 'rgba(255,255,255,0.35)' : '#e870b0';
+  const spinLabels = {'-4':'2L','-3':'1½L','-2':'1L','-1':'½L','0':'ctr','1':'½R','2':'1R','3':'1½R','4':'2R'};
+  const spinTxt = spinLabels[String(spinRaw)] || 'CTR';
+  out += `<defs>
+    <radialGradient id="kCGB2" cx="36%" cy="28%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="48%" stop-color="#d8d2c4"/>
+      <stop offset="100%" stop-color="#908070"/>
+    </radialGradient>
+    <clipPath id="ballClip">
+      <rect x="${W}" y="0" width="${panelW}" height="${H}"/>
+    </clipPath>
+  </defs>`;
+  out += `<g clip-path="url(#ballClip)" id="spin-ball-group">`;
+  out += `<circle cx="${bx}" cy="${by}" r="${br}" fill="url(#kCGB2)" stroke="#aaaaaa" stroke-width="1.5"/>`;
+  out += `<line x1="${bx-br*0.74}" y1="${by}" x2="${bx+br*0.74}" y2="${by}" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>`;
+  out += `<line x1="${bx}" y1="${by-br*0.74}" x2="${bx}" y2="${by+br*0.74}" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>`;
+  out += `<circle cx="${tipX}" cy="${by}" r="${br*0.10}" fill="#000000" opacity="0.85"/>`;
+  const spinY = by + br*0.5;  // halfway down the ball
+  out += `<text x="${bx}" y="${spinY}" text-anchor="middle" font-family="Lato,sans-serif" font-size="16" font-style="italic" font-weight="700" fill="rgba(0,0,0,0.82)">← spin →</text>`;
+  out += `<text x="${bx}" y="${spinY+26}" text-anchor="middle" font-family="Lato,sans-serif" font-size="22" font-weight="900" fill="rgba(0,0,0,0.85)">${spinTxt}</text>`;
+  // Drag handle — invisible rect captures pointer events over ball
+  out += `<rect id="spin-drag" x="${W}" y="0" width="${panelW}" height="${H}" fill="transparent" cursor="ew-resize" touch-action="none"/>`;
+  out += `</g>`;
+
+  svg.innerHTML = out;
+}
+
+
+// Spin ball drag — pointer events on contact-svg
+(function() {
+  let spinDragging = false;
+  document.addEventListener('pointerdown', e => {
+    const el = document.getElementById('spin-drag');
+    if (!el) return;
+    if (e.target !== el) return;
+    spinDragging = true;
+    el.setPointerCapture(e.pointerId);
+    handleSpinDrag(e, el);
+  });
+  document.addEventListener('pointermove', e => {
+    if (!spinDragging) return;
+    const el = document.getElementById('spin-drag');
+    if (el) handleSpinDrag(e, el);
+  });
+  document.addEventListener('pointerup',     () => { spinDragging = false; });
+  document.addEventListener('pointercancel', () => { spinDragging = false; });
+  function handleSpinDrag(e, el) {
+    const svg = document.getElementById('contact-svg');
+    if (!svg) return;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    // Map x within the right panel to spin -4..+4
+    const W = 280, TW = 450;
+    const panelW = TW - W;
+    const br = Math.floor(170 / 2) - 1;
+    const bx = W + panelW / 2;
+    const raw = (svgP.x - bx) / (0.62 * br);  // -1..+1
+    const clamped = Math.max(-1, Math.min(1, raw));
+    const spinVal = Math.round(clamped * 4);  // -4..+4
+    const sl = document.getElementById('sl-spn');
+    if (sl) { sl.value = spinVal; onSliders(); }
+  }
+})();
+
+function selectContact(i) {
+  S.selectedContact = i;
+  drawContact(computeSegs(S.aimAngle, S.numRails));
+}
+
+function toggleMap() {
+  S.mapOn = !S.mapOn;
+  const layer = $('map-layer');
+  if (layer) layer.style.opacity = S.mapOn ? '1' : '0';
+}
+
+function toggleContact() {
+  S.contactOn = !S.contactOn;
+  const wrap  = $('contact-wrap');
+  const pills = $('contact-pills');
+  const btn   = $('btn-metrics');
+  if (wrap)  wrap.style.display  = S.contactOn ? 'block' : 'none';
+  if (pills) pills.style.display = S.contactOn ? 'flex'  : 'none';
+
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG
+// ─────────────────────────────────────────────────────────────────────────────
+const svg=$('tbl');
+
+function svgPt(e){
+  const pt=svg.createSVGPoint();
+  const src=e.touches?e.touches[0]:e;
+  pt.x=src.clientX;pt.y=src.clientY;
+  // Use the content group's CTM — always returns coords in original 460×260
+  // table space regardless of viewBox swap or group rotation transform.
+  return pt.matrixTransform(document.getElementById('tbl-content').getScreenCTM().inverse());
+}
+function clampBall(x,y){return{x:Math.max(TL.left+BALL_R,Math.min(TL.right-BALL_R,x)),y:Math.max(TL.top+BALL_R,Math.min(TL.bottom-BALL_R,y))};}
+
+svg.addEventListener('pointerdown',e=>{
+  e.preventDefault();
+  const p=svgPt(e);
+  const cb=S.cb;
+  if (calTapActual(p)) return;
+  if(Math.hypot(p.x-cb.x,p.y-cb.y)<22){drag='cb';svg.setPointerCapture(e.pointerId);return;}
+
+  // Check endpoint handle
+  const epCx=parseFloat($('ep-dot').getAttribute('cx'));
+  const epCy=parseFloat($('ep-dot').getAttribute('cy'));
+  const epVis=parseFloat($('ep-dot').style.opacity||'0');
+  if(epVis>0&&Math.hypot(p.x-epCx,p.y-epCy)<22){
+    drag='endpoint';svg.setPointerCapture(e.pointerId);return;
+  }
+  drag='handle';svg.setPointerCapture(e.pointerId);
+  S.aimAngle=Math.atan2(p.y-cb.y,p.x-cb.x);
+  render();
+});
+
+svg.addEventListener('pointermove',e=>{
+  if(!drag)return;e.preventDefault();
+  const p=svgPt(e);
+  if(drag==='cb')            S.cb=clampBall(p.x,p.y);
+  else if(drag==='handle')   S.aimAngle=Math.atan2(p.y-S.cb.y,p.x-S.cb.x);
+  else if(drag==='endpoint') S.aimAngle=solveAngle(p.x,p.y);
+  render();
+});
+svg.addEventListener('pointerup',   ()=>{drag=null;});
+svg.addEventListener('pointercancel',()=>{drag=null;});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────────────────────────────────────
+function addRail(){if(S.numRails>=MAX_RAILS)return;S.numRails++;buildReadouts();buildPills();render();}
+function removeRail(){if(S.numRails<=1)return;S.numRails--;buildReadouts();buildPills();render();}
+
+function onSliders(){
+  S.speed=parseInt($('sl-spd').value)/100;
+  const sv=parseInt($('sl-spn').value);   // -4 to +4
+  const bv=parseInt($('sl-bias').value);
+  S.spin = sv / 4;   // normalise to -1…+1 for physics
+  S.bias = bv / 50;
+  $('sv-spd').textContent=S.speed<0.28?'slow':S.speed<0.72?'med':'fast';
+  const spinLabels={
+    '-4':'2 tips L', '-3':'1½ tips L', '-2':'1 tip L', '-1':'½ tip L',
+    '0':'center',
+    '1':'½ tip R',   '2':'1 tip R',   '3':'1½ tips R', '4':'2 tips R'
+  };
+  $('sv-spn').textContent = spinLabels[String(sv)];
+  let bt='neutral';if(bv>3)bt='long+'+bv;if(bv<-3)bt='short'+bv;
+  $('sv-bias').textContent=bt;
+  render();
+}
+
+function applyRotation(){
+  const svgEl=$('tbl'),grp=$('tbl-content'),r=S.rotation;
+  if(r===0){svgEl.setAttribute('viewBox','0 0 460 260');grp.setAttribute('transform','');}
+  else if(r===90){svgEl.setAttribute('viewBox','0 0 260 460');grp.setAttribute('transform','translate(260,0) rotate(90)');}
+  else if(r===180){svgEl.setAttribute('viewBox','0 0 460 260');grp.setAttribute('transform','translate(460,260) rotate(180)');}
+  else{svgEl.setAttribute('viewBox','0 0 260 460');grp.setAttribute('transform','translate(0,460) rotate(270)');}
+  render();
+}
+function rotCW(){  S.rotation=(S.rotation+90)%360;  applyRotation(); }
+function rotCCW(){ S.rotation=(S.rotation+270)%360; applyRotation(); }
+function cycleRotation(){ rotCW(); }
+
+function cycleTableSize() {
+  const poolSizes=[7,8,9], snookerSizes=[10,12];
+  const sizes = S.snooker ? snookerSizes : poolSizes;
+  const idx = sizes.indexOf(S.tableSize);
+  S.tableSize = sizes[(idx+1) % sizes.length];
+  $('size-btn').textContent = S.tableSize+'ft';
+  render();
+}
+function toggleUnits() {
+  S.metric = !S.metric;
+  $('unit-btn').textContent = S.metric ? 'M' : 'FT';
+  render();
+}
+function toggleTable(){
+  S.snooker = !S.snooker;
+  S.tableSize = S.snooker ? 12 : 9;
+  $('size-btn').textContent = S.tableSize+'ft';
+  const btn = $('table-btn');
+  btn.textContent = S.snooker ? 'SNOOKER' : 'POOL';
+  btn.style.borderColor = S.snooker ? 'rgba(112,192,240,0.5)' : 'rgba(160,208,160,0.4)';
+  btn.style.color = S.snooker ? '#70c0f0' : '#a0d0a0';
+  render();
+}
+
+function toggleInfo(){
+  $('info-overlay').classList.toggle('open');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// CALIBRATION
+// ─────────────────────────────────────────────────────────────────────────────
+let calMode  = false;
+let calPhase = 'setup';
+let calShots = [];
+const CAL_MAX = 5;
+let tableK = 0.00;  // table correction loaded from localStorage
+
+function loadTableProfile() {
+  try {
+    const p = JSON.parse(localStorage.getItem('lz-kicker-profile') || '{}');
+    if (typeof p.k === 'number') tableK = p.k;
+  } catch(e) {}
+}
+function saveTableProfile() {
+  try { localStorage.setItem('lz-kicker-profile', JSON.stringify({k: tableK})); } catch(e) {}
+}
+
+function toggleCal() {
+  calMode = !calMode;
+  if ($('cal-panel')) $('cal-panel').classList.toggle('open', calMode);
+  if (!calMode) {
+    calPhase = 'setup';
+    sV('cal-predicted', false); sV('cal-predicted-lbl', false);
+    sV('cal-actual',    false); sV('cal-actual-lbl',    false);
+  }
+  calUpdateUI();
+  render();
+}
+
+function calUpdateUI() {
+  const n = calShots.filter(s => s.actual).length;
+  for (let i = 0; i < CAL_MAX; i++) {
+    const el = $('csd-' + i);
+    if (el) el.classList.toggle('done', i < n);
+  }
+  if (!calMode) return;
+  const inst = $('cal-instruction');
+  const stat = $('cal-status');
+  const btn  = $('cal-shoot-btn');
+  const kPct = Math.round(tableK * 100);
+  const kStr = (kPct >= 0 ? '+' : '') + kPct + '%';
+  if (stat) stat.innerHTML = `${n} of ${CAL_MAX} shots · table profile: <strong style="color:#f0df70">${kStr}</strong>`;
+  if (calPhase === 'setup') {
+    if (inst) inst.textContent = 'Set up a kick shot. Aim the cue ball at a rail. Tap SHOOT when ready.';
+    if (btn)  { btn.textContent = 'SHOOT →'; btn.style.display = ''; }
+  } else {
+    if (inst) inst.textContent = 'Shoot it on the table. Then tap where the cue ball actually stopped.';
+    if (btn)  btn.style.display = 'none';
+  }
+}
+
+function calShoot() {
+  if (!calMode) return;
+  const segs = computeSegs(S.aimAngle, S.numRails);
+  if (!segs.length) { alert('Aim at a rail first.'); return; }
+  const last = segs[segs.length - 1].to;
+  // Show predicted marker
+  sC('cal-predicted', last.x, last.y);
+  $('cal-predicted-lbl').setAttribute('x', last.x);
+  $('cal-predicted-lbl').setAttribute('y', last.y - 14);
+  sV('cal-predicted', true); sV('cal-predicted-lbl', true);
+  sV('cal-actual', false);   sV('cal-actual-lbl', false);
+  calShots.push({ predicted: {x: last.x, y: last.y}, actual: null });
+  calPhase = 'tap';
+  calUpdateUI();
+}
+
+function calTapActual(p) {
+  if (!calMode || calPhase !== 'tap') return false;
+  const shot = calShots[calShots.length - 1];
+  shot.actual = {x: p.x, y: p.y};
+  sC('cal-actual', p.x, p.y);
+  $('cal-actual-lbl').setAttribute('x', p.x);
+  $('cal-actual-lbl').setAttribute('y', p.y + 16);
+  sV('cal-actual', true); sV('cal-actual-lbl', true);
+  // Error: positive = came up short (k too low), negative = went long (k too high)
+  const dx = shot.actual.x - shot.predicted.x;
+  const dy = shot.actual.y - shot.predicted.y;
+  const err = Math.hypot(dx, dy) * (dy > 0 ? 1 : -1);
+  const kAdj = -err * 0.0008;
+  // Average all shots
+  const done = calShots.filter(s => s.actual);
+  tableK = done.reduce((s, sh) => {
+    const ex = sh.actual.x - sh.predicted.x;
+    const ey = sh.actual.y - sh.predicted.y;
+    return s + (-Math.hypot(ex,ey) * (ey>0?1:-1) * 0.0008);
+  }, 0) / done.length;
+  tableK = Math.max(-0.3, Math.min(0.3, tableK));
+  saveTableProfile();
+  // Update bias slider to reflect calibration
+  const newBias = Math.round(tableK * 50 / 0.12);
+  const slBias = $('sl-bias');
+  if (slBias) { slBias.value = Math.max(-50, Math.min(50, newBias)); onSliders(); }
+  const dirText = dy < -8 ? 'went long' : dy > 8 ? 'came up short' : dx < -8 ? 'went left' : dx > 8 ? 'went right' : 'on target ✓';
+  const res = $('cal-result');
+  if (res) {
+    res.style.display = 'block';
+    const kPct = Math.round(tableK * 100);
+    res.innerHTML = `<strong style="color:#f0df70">Shot ${done.length}: ${dirText}</strong><br>` +
+      `Table profile: ${(kPct>=0?'+':'')+kPct}%` +
+      (done.length < 3 ? `<br><span style="color:rgba(255,255,255,0.5)">Shoot ${3-done.length} more for reliable profile</span>`
+                       : `<br><span style="color:#4ade80">✓ Profile ready — keep shooting to refine</span>`);
+  }
+  calPhase = 'setup';
+  calUpdateUI();
+  render();
+  return true;
+}
+
+function calUndo() {
+  if (!calShots.length) return;
+  calShots.pop(); calPhase = 'setup';
+  sV('cal-predicted', false); sV('cal-predicted-lbl', false);
+  sV('cal-actual',    false); sV('cal-actual-lbl',    false);
+  calUpdateUI();
+}
+
+function calReset() {
+  calShots = []; calPhase = 'setup'; tableK = 0.00; saveTableProfile();
+  const slBias = $('sl-bias'); if (slBias) { slBias.value = 0; onSliders(); }
+  sV('cal-predicted', false); sV('cal-predicted-lbl', false);
+  sV('cal-actual',    false); sV('cal-actual-lbl',    false);
+  const res = $('cal-result'); if (res) res.style.display = 'none';
+  calUpdateUI(); render();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// KEYBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const sl = $('sl-spn');
+  if (!sl) return;
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    sl.value = Math.max(-4, parseInt(sl.value) - 1);
+    onSliders();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    sl.value = Math.min(4, parseInt(sl.value) + 1);
+    onSliders();
+  }
+});
+
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+buildReadouts();
+buildPills();
+loadTableProfile();
+render();
+</script>
+</body>
+</html>

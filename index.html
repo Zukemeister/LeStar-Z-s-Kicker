@@ -472,26 +472,15 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
 </div>
 
 <!-- ── BOUNCE METRICS ── -->
-<div id="swap-container" style="display:flex;flex-direction:column;">
-<div id="block-ball">
-<div id="contact-pills"></div>
-<div id="contact-wrap">
-  <svg id="contact-svg" viewBox="0 0 450 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
-    <rect width="450" height="150" fill="rgba(0,0,0,0.28)"/>
-  </svg>
-</div><!-- /block-ball --></div>
-
 <div id="rail-row">
   <button id="btn-add-rail"  onclick="addRail()">＋ ADD RAIL</button>
   <button id="btn-rem-rail"  onclick="removeRail()">－ REM RAIL</button>
-  <button id="btn-map2" onclick="toggleMap2()">MAP 2</button>
-  <button id="btn-map"       onclick="toggleMap()">MAP</button>
+  <button id="btn-map" onclick="toggleMap()">MAP</button>
   <button class="tog" id="btn-swap" onclick="swapPanels()" style="background:#a0d0a0;color:#001a00;font-size:18px;font-weight:900;padding:0 10px;" title="Swap sliders and ball diagram">⇅</button>
   <button id="btn-cal"       onclick="toggleCal()">CAL</button>
   <button id="btn-metrics"   onclick="toggleContact()">BOUNCE</button>
   <button class="tog" id="btn-flip" onclick="flipDiagram()" style="background:#f0df70;color:#1a1400;" title="Flip diagram">⇄</button>
 </div>
-
 
 <!-- ── CALIBRATION PANEL ── -->
 <div id="cal-panel">
@@ -511,6 +500,16 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   </div>
   <div id="cal-result"></div>
 </div>
+
+<div id="swap-container" style="display:flex;flex-direction:column;">
+<div id="block-ball">
+<div id="contact-pills"></div>
+<div id="contact-wrap">
+  <svg id="contact-svg" viewBox="0 0 450 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
+    <rect width="450" height="150" fill="rgba(0,0,0,0.28)"/>
+  </svg>
+</div>
+</div><!-- /block-ball -->
 
 <div id="block-sliders"><div class="sgroup">
   <div class="srow">
@@ -532,9 +531,7 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
       <span class="sval" id="sv-bias">neutral</span>
   </div>
 </div>
-
-</div>
-</div></div><!-- /block-sliders -->
+</div><!-- /block-sliders -->
 </div><!-- /swap-container -->
 <div id="readouts"></div>
 
@@ -570,7 +567,6 @@ const S = {
   selectedContact: 0,
   contactOn: true,
   mapOn: true,
-  map2On: false,
   tableSize: 9,
   metric: false,
 };
@@ -986,13 +982,10 @@ function selectContact(i) {
 
 function toggleMap() {
   S.mapOn = !S.mapOn;
-  const layer = $('map-layer');
-  if (layer) layer.style.opacity = S.mapOn ? '1' : '0';
-}
-function toggleMap2() {
-  S.map2On = !S.map2On;
-  const layer = document.getElementById('map2-layer');
-  if (layer) { layer.style.transition='opacity 0.2s'; layer.style.opacity = S.map2On ? '1' : '0'; }
+  ['map-layer','map2-layer'].forEach(id => {
+    const l = document.getElementById(id);
+    if (l) { l.style.transition='opacity 0.2s'; l.style.opacity = S.mapOn ? '1' : '0'; }
+  });
 }
 
 function toggleContact() {
@@ -1286,14 +1279,13 @@ function flipDiagram() {
 let panelsSwapped = false;
 function swapPanels() {
   panelsSwapped = !panelsSwapped;
-  const sliders  = document.getElementById('block-sliders');
-  const ball     = document.getElementById('block-ball');
-  const readouts = document.getElementById('readouts');
+  const container = document.getElementById('swap-container');
+  const sliders   = document.getElementById('block-sliders');
+  const ball      = document.getElementById('block-ball');
   if (panelsSwapped) {
-    document.getElementById('swap-container').insertBefore(sliders, ball);
+    container.insertBefore(sliders, ball);
   } else {
-    const container = document.getElementById('swap-container');
-    container.parentNode.insertBefore(sliders, container.nextSibling);
+    container.insertBefore(ball, sliders);
   }
 }
 

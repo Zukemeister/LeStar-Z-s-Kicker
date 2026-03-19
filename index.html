@@ -472,12 +472,14 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
 </div>
 
 <!-- ── BOUNCE METRICS ── -->
+<div id="swap-container" style="display:flex;flex-direction:column;">
+<div id="block-ball">
 <div id="contact-pills"></div>
 <div id="contact-wrap">
   <svg id="contact-svg" viewBox="0 0 450 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;">
     <rect width="450" height="150" fill="rgba(0,0,0,0.28)"/>
   </svg>
-</div>
+</div><!-- /block-ball --></div>
 
 <div id="rail-row">
   <button id="btn-add-rail"  onclick="addRail()">＋ ADD RAIL</button>
@@ -487,9 +489,9 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   <button class="tog" id="btn-swap" onclick="swapPanels()" style="background:#a0d0a0;color:#001a00;font-size:18px;font-weight:900;padding:0 10px;" title="Swap sliders and ball diagram">⇅</button>
   <button id="btn-cal"       onclick="toggleCal()">CAL</button>
   <button id="btn-metrics"   onclick="toggleContact()">BOUNCE</button>
+  <button class="tog" id="btn-flip" onclick="flipDiagram()" style="background:#f0df70;color:#1a1400;" title="Flip diagram">⇄</button>
 </div>
 
-<div id="swap-container" style="display:flex;flex-direction:column;"><div id="block-ball">
 
 <!-- ── CALIBRATION PANEL ── -->
 <div id="cal-panel">
@@ -510,7 +512,6 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   <div id="cal-result"></div>
 </div>
 
-</div><!-- /block-ball -->
 <div id="block-sliders"><div class="sgroup">
   <div class="srow">
     <span class="slbl">speed</span>
@@ -533,7 +534,7 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
 </div>
 
 </div>
-</div><!-- /block-sliders -->
+</div></div><!-- /block-sliders -->
 </div><!-- /swap-container -->
 <div id="readouts"></div>
 
@@ -1010,12 +1011,15 @@ function toggleContact() {
 const svg=$('tbl');
 
 function svgPt(e){
-  const pt=svg.createSVGPoint();
   const src=e.touches?e.touches[0]:e;
-  pt.x=src.clientX;pt.y=src.clientY;
-  // Use the content group's CTM — always returns coords in original 460×260
-  // table space regardless of viewBox swap or group rotation transform.
-  return pt.matrixTransform(document.getElementById('tbl-content').getScreenCTM().inverse());
+  const svgEl=$('tbl');
+  const rect=svgEl.getBoundingClientRect();
+  const vb=svgEl.viewBox.baseVal;
+  // getBoundingClientRect accounts for CSS zoom transform on iOS
+  return {
+    x: (src.clientX - rect.left) / rect.width  * vb.width,
+    y: (src.clientY - rect.top)  / rect.height * vb.height
+  };
 }
 function clampBall(x,y){return{x:Math.max(TL.left+BALL_R,Math.min(TL.right-BALL_R,x)),y:Math.max(TL.top+BALL_R,Math.min(TL.bottom-BALL_R,y))};}
 
@@ -1271,6 +1275,13 @@ buildReadouts();
 buildPills();
 loadTableProfile();
 render();
+// ── FLIP DIAGRAM ──────────────────────────────────────────────
+function flipDiagram() {
+  const cur = S._diagDragRh !== undefined ? S._diagDragRh : false;
+  S._diagDragRh = !cur;
+  render();
+}
+
 // ── SWAP PANELS ──────────────────────────────────────────────
 let panelsSwapped = false;
 function swapPanels() {
@@ -1278,11 +1289,11 @@ function swapPanels() {
   const sliders  = document.getElementById('block-sliders');
   const ball     = document.getElementById('block-ball');
   const readouts = document.getElementById('readouts');
-  const card     = document.getElementById('app') || document.querySelector('.card');
   if (panelsSwapped) {
     document.getElementById('swap-container').insertBefore(sliders, ball);
   } else {
-    card.insertBefore(sliders, readouts);
+    const container = document.getElementById('swap-container');
+    container.parentNode.insertBefore(sliders, container.nextSibling);
   }
 }
 

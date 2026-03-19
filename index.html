@@ -101,12 +101,10 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
     <h1><span class="t-lestar">LeStar&nbsp;</span><span class="t-z">Z</span><span class="t-rest">'s Kicker</span></h1>
     <p class="sub">place the cue ball · aim for a rail · see where it ends up</p>
   </div>
-  <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0;">
-    <button id="table-btn" onclick="toggleTable()" style="padding:4px 10px;border-radius:14px;border:2px solid rgba(160,208,160,0.4);background:rgba(160,208,160,0.08);color:#a0d0a0;font-family:'Lato',sans-serif;font-size:11px;font-weight:900;letter-spacing:0.06em;cursor:pointer;white-space:nowrap;">POOL</button>
-    <div style="display:flex;gap:3px;">
-      <button id="size-btn" onclick="cycleTableSize()" style="padding:3px 8px;border-radius:10px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:10px;font-weight:900;cursor:pointer;">9ft</button>
-      <button id="unit-btn" onclick="toggleUnits()" style="padding:3px 8px;border-radius:10px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:10px;font-weight:900;cursor:pointer;">FT</button>
-    </div>
+  <div style="display:flex;gap:3px;align-items:center;flex-shrink:0;">
+    <button id="size-btn" onclick="cycleTableSize()" style="padding:2px 6px;border-radius:8px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;cursor:pointer;">9ft</button>
+    <button id="unit-btn" onclick="toggleUnits()" style="padding:2px 6px;border-radius:8px;border:1px solid rgba(240,223,112,0.4);background:rgba(240,223,112,0.08);color:#f0df70;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;cursor:pointer;">FT</button>
+    <button id="table-btn" onclick="toggleTable()" style="padding:2px 7px;border-radius:10px;border:2px solid rgba(160,208,160,0.4);background:rgba(160,208,160,0.08);color:#a0d0a0;font-family:'Lato',sans-serif;font-size:9px;font-weight:900;cursor:pointer;white-space:nowrap;">POOL</button>
   </div>
 </div>
 </header>
@@ -479,7 +477,6 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   <button class="tog" id="btn-swap" onclick="swapPanels()" style="background:#a0d0a0;color:#001a00;font-size:18px;font-weight:900;padding:0 10px;" title="Swap sliders and ball diagram">⇅</button>
   <button id="btn-cal"       onclick="toggleCal()">CAL</button>
   <button id="btn-metrics"   onclick="toggleContact()">BOUNCE</button>
-  <button class="tog" id="btn-flip" onclick="flipDiagram()" style="background:#f0df70;color:#1a1400;" title="Flip diagram">⇄</button>
 </div>
 
 <!-- ── CALIBRATION PANEL ── -->

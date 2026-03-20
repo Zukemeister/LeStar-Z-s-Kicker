@@ -2,6 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="LeStar Z Kicker">
+  <link rel="apple-touch-icon" href="/icon-apple.png">
+  <link rel="manifest" href="/manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=5.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -89,7 +94,101 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
 @media (orientation: landscape) {
   #app, .card { max-width: 100% !important; }
 }
+/* ── EDGE CONTROL PANEL ── */
+#edge-panel-wrap { display: contents; }
+#edge-panel {
+  position: fixed; right: 2px; top: 50%; transform: translateY(-50%);
+  z-index: 500; display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 8px 4px;
+  background: rgba(255,255,248,0.95);
+  border-radius: 10px 0 0 10px; border: 1px solid rgba(0,0,0,0.15); border-right: none;
+  box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  pointer-events: all; touch-action: manipulation;
+}
+.ep-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,0.15); background: rgba(255,255,255,0.9);
+  color: #333; font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  outline: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.ep-btn:active { background: rgba(220,220,210,0.9); }
+.ep-btn.active { background: #2a5a2a; color: #f0df70; border-color: #2a5a2a; }
+.ep-btn.locked { background: #7a1a1a; color: #ffaaaa; border-color: #7a1a1a; }
+.ep-sep { width: 24px; height: 1px; background: rgba(0,0,0,0.12); margin: 2px 0; }
+.ep-label { font-family: 'Lato', sans-serif; font-size: 7px; font-weight: 900;
+  letter-spacing: 1px; color: rgba(0,0,0,0.35); text-transform: uppercase; }
+.snap-label {
+  position: fixed; pointer-events: none;
+  font-family: 'Lato', sans-serif; font-size: 11px; font-weight: 900;
+  color: #f0df70; background: rgba(0,0,0,0.7);
+  padding: 2px 5px; border-radius: 4px; white-space: nowrap;
+  transition: opacity 0.4s; z-index: 600;
+}
+
+#sl-bias-fat::-webkit-slider-thumb,#sl-bias-med::-webkit-slider-thumb,#sl-bias-thin::-webkit-slider-thumb{background:#c890f0;}
+#sl-bias-fat,#sl-bias-med,#sl-bias-thin{-webkit-appearance:none;height:5px;background:rgba(200,144,240,0.2);border-radius:3px;outline:none;touch-action:none;flex:1;}
 </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const w = reg.installing;
+          w.addEventListener('statechange', () => {
+            if (w.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available — show quiet notice
+              const n = document.createElement('div');
+              n.style.cssText = 'position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#1a4a1a;color:#f0df70;font-family:Lato,sans-serif;font-size:12px;font-weight:900;padding:8px 16px;border-radius:20px;z-index:9999;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,0.4);';
+              n.textContent = '↑ Update available — tap to refresh';
+              n.onclick = () => { w.postMessage({type:'SKIP_WAITING'}); location.reload(); };
+              document.body.appendChild(n);
+            }
+          });
+        });
+      });
+    }
+  </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version available — reload silently
+            window.location.reload();
+          }
+        });
+      });
+    });
+  });
+}
+const SHOT_LIBRARY = [
+  { name: '1-rail — sq 28',   cb:{x:355,y:205}, angle:-0.85, rails:1, desc:'CB at 28, 1-rail kick to top' },
+  { name: '2-rail — sq 25',   cb:{x:55, y:205}, angle:-1.05, rails:2, desc:'CB at 25, 2-rail corner kick' },
+  { name: '3-rail — sq 20',   cb:{x:205,y:155}, angle:-0.70, rails:3, desc:'CB at 20, 3-rail pattern' },
+  { name: '2-rail — sq 26',   cb:{x:105,y:205}, angle:-1.20, rails:2, desc:'CB at 26, 2-rail tight corner' },
+  { name: '1-rail long — sq 4', cb:{x:205,y:55},  angle: 0.30, rails:1, desc:'CB at 4, long rail kick' },
+];
+let libraryOpen = false;
+function toggleShotLibrary() {
+  libraryOpen = !libraryOpen;
+  const panel = document.getElementById('shot-library-panel');
+  if (panel) panel.style.display = libraryOpen ? 'block' : 'none';
+}
+function loadShot(idx) {
+  const shot = SHOT_LIBRARY[idx];
+  if (!shot) return;
+  S.cb = {...shot.cb};
+  S.aimAngle = shot.angle;
+  S.numRails = shot.rails;
+  buildPills(); render(); toggleShotLibrary();
+}
+
+</script>
 </head>
 <body>
 <div id="zoom-wrap" style="width:100%;transform-origin:top left;"><div id="app">
@@ -477,25 +576,21 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
   <button class="tog" id="btn-swap" onclick="swapPanels()" style="background:#a0d0a0;color:#001a00;font-size:18px;font-weight:900;padding:0 10px;" title="Swap sliders and ball diagram">⇅</button>
   <button id="btn-cal"       onclick="toggleCal()">CAL</button>
   <button id="btn-metrics"   onclick="toggleContact()">BOUNCE</button>
+  <button class="tog" onclick="toggleShotLibrary()" style="background:#f0df70;color:#1a1400;">SHOTS</button>
 </div>
 
 <!-- ── CALIBRATION PANEL ── -->
 <div id="cal-panel">
   <div id="cal-instruction"></div>
   <div id="cal-status"></div>
-  <div class="cal-shots">
-    <div class="cal-shot-dot" id="csd-0"></div>
-    <div class="cal-shot-dot" id="csd-1"></div>
-    <div class="cal-shot-dot" id="csd-2"></div>
-    <div class="cal-shot-dot" id="csd-3"></div>
-    <div class="cal-shot-dot" id="csd-4"></div>
-  </div>
   <div class="cal-actions">
-    <button class="cal-action-btn primary" id="cal-shoot-btn" onclick="calShoot()">SHOOT →</button>
+    <button class="cal-action-btn primary" id="cal-rec1-btn" onclick="calRecord1()">① RECORD PREDICTED</button>
+    <button class="cal-action-btn primary" id="cal-rec2-btn" onclick="calRecord2()" style="display:none;background:#1a5a3a;">② RECORD ACTUAL</button>
     <button class="cal-action-btn" onclick="calUndo()">UNDO</button>
-    <button class="cal-action-btn danger" onclick="calReset()">RESET</button>
+    <button class="cal-action-btn danger" onclick="calReset()">RESET ALL</button>
   </div>
   <div id="cal-result"></div>
+  <div id="cal-log" style="margin-top:8px;max-height:120px;overflow-y:auto;font-size:10px;color:rgba(255,255,255,0.5);"></div>
 </div>
 
 <div id="swap-container" style="display:flex;flex-direction:column;">
@@ -521,15 +616,33 @@ footer{text-align:center;font-size:0.58rem;color:rgba(255,255,255,0.18);padding:
       <span id="sv-spn-n" style="font-size:11px;font-weight:900;color:rgba(232,112,176,0.5);min-width:14px;text-align:center;">0</span>
       <span class="sval" id="sv-spn">center</span>
   </div>
-  <div class="srow" style="margin-top:6px;">
-    <span class="slbl">bias</span>
-    <input type="range" id="sl-bias" min="-50" max="50" value="0" oninput="onSliders()">
-      <span id="sv-bias-n" style="font-size:11px;font-weight:900;color:rgba(200,144,240,0.5);min-width:14px;text-align:center;">0</span>
-      <span class="sval" id="sv-bias">neutral</span>
+  <div class="srow" style="margin-top:6px">
+    <span class="slbl" style="color:#c890f0;font-size:9px;">FAT</span>
+    <input type="range" id="sl-bias-fat" min="-12" max="12" value="0" oninput="onSliders()">
+    <span id="sv-bias-fat-n" style="font-size:11px;font-weight:900;color:rgba(200,144,240,0.5);min-width:14px;text-align:center;">0</span>
+    <span class="sval" id="sv-bias-fat" style="color:#c890f0;">0</span>
+  </div>
+  <div class="srow" style="margin-top:4px">
+    <span class="slbl" style="color:#c890f0;font-size:9px;">MED</span>
+    <input type="range" id="sl-bias-med" min="-12" max="12" value="0" oninput="onSliders()">
+    <span id="sv-bias-med-n" style="font-size:11px;font-weight:900;color:rgba(200,144,240,0.5);min-width:14px;text-align:center;">0</span>
+    <span class="sval" id="sv-bias-med" style="color:#c890f0;">0</span>
+  </div>
+  <div class="srow" style="margin-top:4px">
+    <span class="slbl" style="color:#c890f0;font-size:9px;">THIN</span>
+    <input type="range" id="sl-bias-thin" min="-12" max="12" value="0" oninput="onSliders()">
+    <span id="sv-bias-thin-n" style="font-size:11px;font-weight:900;color:rgba(200,144,240,0.5);min-width:14px;text-align:center;">0</span>
+    <span class="sval" id="sv-bias-thin" style="color:#c890f0;">0</span>
   </div>
 </div>
 </div><!-- /block-sliders -->
 </div><!-- /swap-container -->
+<div id="personal-bias" style="display:none;text-align:center;font-size:10px;font-weight:900;letter-spacing:1px;color:rgba(240,223,112,0.6);padding:3px 0 2px;">PERSONAL BIAS: —</div>
+  <!-- SHOT LIBRARY PANEL -->
+  <div id="shot-library-panel" style="display:none;background:rgba(0,0,0,0.3);border:1px solid rgba(240,223,112,0.3);border-radius:6px;padding:8px;margin-bottom:6px;">
+    <div style="font-size:9px;font-weight:900;letter-spacing:1px;color:rgba(240,223,112,0.7);margin-bottom:5px;">SHOT LIBRARY</div>
+    <div id="shot-library-list"></div>
+  </div>
 <div id="readouts"></div>
 
 </div><!-- /zoom-wrap -->
@@ -568,6 +681,12 @@ const S = {
   metric: false,
 };
 let drag = null;
+let snapOn = true;
+let snapLabelTimer = null;
+let SNAP_POINTS = [];
+const SNAP_RADIUS = 14;
+let lockTable = false;
+let lockSliders = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PHYSICS
@@ -924,9 +1043,9 @@ function drawContact(segs) {
   out += `<line x1="${bx-br*0.74}" y1="${by}" x2="${bx+br*0.74}" y2="${by}" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>`;
   out += `<line x1="${bx}" y1="${by-br*0.74}" x2="${bx}" y2="${by+br*0.74}" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>`;
   out += `<circle cx="${tipX}" cy="${by}" r="${br*0.10}" fill="#000000" opacity="0.85"/>`;
+  const spinRawLbl = spinRaw === 0 ? 'ctr' : (spinRaw > 0 ? '+' : '') + spinRaw;
+  out += `<text x="${bx}" y="${by + br*0.55}" text-anchor="middle" font-family="Lato,sans-serif" font-size="18" font-weight="900" fill="rgba(0,0,0,0.75)">${spinRawLbl}</text>`;
   const spinY = by + br*0.5;  // halfway down the ball
-  out += `<text x="${bx}" y="${spinY}" text-anchor="middle" font-family="Lato,sans-serif" font-size="16" font-style="italic" font-weight="700" fill="rgba(0,0,0,0.82)">← spin →</text>`;
-  out += `<text x="${bx}" y="${spinY+26}" text-anchor="middle" font-family="Lato,sans-serif" font-size="22" font-weight="900" fill="rgba(0,0,0,0.85)">${spinTxt}</text>`;
   // Drag handle — invisible rect captures pointer events over ball
   out += `<rect id="spin-drag" x="${W}" y="0" width="${panelW}" height="${H}" fill="transparent" cursor="ew-resize" touch-action="none"/>`;
   out += `</g>`;
@@ -956,17 +1075,17 @@ function drawContact(segs) {
   function handleSpinDrag(e, el) {
     const svg = document.getElementById('contact-svg');
     if (!svg) return;
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
-    // Map x within the right panel to spin -4..+4
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox.baseVal;
+    // Convert clientX to SVG coords accounting for CSS zoom
+    const svgX = (e.clientX - rect.left) / rect.width * vb.width;
     const W = 280, TW = 450;
     const panelW = TW - W;
-    const br = Math.floor(170 / 2) - 1;
+    const br = Math.floor(150 / 2) - 1;
     const bx = W + panelW / 2;
-    const raw = (svgP.x - bx) / (0.62 * br);  // -1..+1
+    const raw = (svgX - bx) / (0.62 * br);
     const clamped = Math.max(-1, Math.min(1, raw));
-    const spinVal = Math.round(clamped * 4);  // -4..+4
+    const spinVal = Math.round(clamped * 4);
     const sl = document.getElementById('sl-spn');
     if (sl) { sl.value = spinVal; onSliders(); }
   }
@@ -1015,6 +1134,7 @@ function clampBall(x,y){return{x:Math.max(TL.left+BALL_R,Math.min(TL.right-BALL_
 
 svg.addEventListener('pointerdown',e=>{
   e.preventDefault();
+  if(lockTable)return;
   const p=svgPt(e);
   const cb=S.cb;
   if (calTapActual(p)) return;
@@ -1035,12 +1155,27 @@ svg.addEventListener('pointerdown',e=>{
 svg.addEventListener('pointermove',e=>{
   if(!drag)return;e.preventDefault();
   const p=svgPt(e);
-  if(drag==='cb')            S.cb=clampBall(p.x,p.y);
+  if(drag==='cb'){
+    const c=clampBall(p.x,p.y),sn=applySnap(c.x,c.y);
+    S.cb={x:sn.x,y:sn.y};
+    if(sn.label)showSnapLabel($('tbl'),sn.x,sn.y,sn.label,'cb');
+  }
   else if(drag==='handle')   S.aimAngle=Math.atan2(p.y-S.cb.y,p.x-S.cb.x);
   else if(drag==='endpoint') S.aimAngle=solveAngle(p.x,p.y);
   render();
 });
-svg.addEventListener('pointerup',   ()=>{drag=null;});
+svg.addEventListener('pointerup', () => {
+  if (drag === 'cb') {
+    const pt = SNAP_POINTS.length ? SNAP_POINTS.reduce((best,p) => {
+      const d=Math.hypot(S.cb.x-p.x,S.cb.y-p.y);
+      return d < Math.hypot(S.cb.x-best.x,S.cb.y-best.y)?p:best;
+    }) : null;
+    if (pt && Math.hypot(S.cb.x-pt.x,S.cb.y-pt.y) < SNAP_RADIUS) {
+      showSnapLabel($('tbl'),pt.x,pt.y,pt.label,'cb');
+    }
+  }
+  drag=null;
+});
 svg.addEventListener('pointercancel',()=>{drag=null;});
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1052,9 +1187,17 @@ function removeRail(){if(S.numRails<=1)return;S.numRails--;buildReadouts();build
 function onSliders(){
   S.speed=parseInt($('sl-spd').value)/100;
   const sv=parseInt($('sl-spn').value);   // -4 to +4
-  const bv=parseInt($('sl-bias').value);
-  S.spin = sv / 4;   // normalise to -1…+1 for physics
-  S.bias = bv / 50;
+  S.spin = sv / 4;
+  // Three-zone bias for kicker
+  const _bFat  = parseInt($('sl-bias-fat')?.value  || '0') * 0.012;
+  const _bMed  = parseInt($('sl-bias-med')?.value  || '0') * 0.012;
+  const _bThin = parseInt($('sl-bias-thin')?.value || '0') * 0.012;
+  S.bias = _bMed; // Kicker uses med as default; future: zone by kick angle
+  ['fat','med','thin'].forEach(z => {
+    const v = parseInt($('sl-bias-'+z)?.value || '0');
+    const el=$('sv-bias-'+z); if(el) el.textContent=(v===0?'0':(v>0?'+':'')+v);
+    const en=$('sv-bias-'+z+'-n'); if(en) en.textContent=Math.abs(v)===0?'0':Math.max(1,Math.round(Math.abs(v)/12*10));
+  });
   $('sv-spd').textContent=S.speed<0.28?'slow':S.speed<0.72?'med':'fast';
   // Intensity 1-10
   const _sv=parseInt($('sl-spd').value),_sn=Math.abs(parseInt($('sl-spn').value));
@@ -1118,123 +1261,197 @@ function toggleInfo(){
 // CALIBRATION
 // ─────────────────────────────────────────────────────────────────────────────
 let calMode  = false;
-let calPhase = 'setup';
-let calShots = [];
-const CAL_MAX = 5;
-let tableK = 0.00;  // table correction loaded from localStorage
+let calPhase = 'idle';   // idle | predicted
+let calPendingShot = null;
+const CAL_MAX = 50;
+let tableK = 0.00;
 
+// ── STORAGE ──────────────────────────────────────────────────
 function loadTableProfile() {
   try {
-    const p = JSON.parse(localStorage.getItem('lz-kicker-profile') || '{}');
+    const p = JSON.parse(localStorage.getItem('lz-kicker-v2') || '{}');
     if (typeof p.k === 'number') tableK = p.k;
+    if (Array.isArray(p.shots)) calShots = p.shots;
   } catch(e) {}
 }
 function saveTableProfile() {
-  try { localStorage.setItem('lz-kicker-profile', JSON.stringify({k: tableK})); } catch(e) {}
+  try {
+    localStorage.setItem('lz-kicker-v2', JSON.stringify({
+      k: tableK,
+      shots: calShots.slice(-CAL_MAX)
+    }));
+  } catch(e) {}
 }
+let calShots = [];
 
 function toggleCal() {
   calMode = !calMode;
   if ($('cal-panel')) $('cal-panel').classList.toggle('open', calMode);
   if (!calMode) {
-    calPhase = 'setup';
+    calPhase = 'idle'; calPendingShot = null;
     sV('cal-predicted', false); sV('cal-predicted-lbl', false);
     sV('cal-actual',    false); sV('cal-actual-lbl',    false);
   }
-  calUpdateUI();
-  render();
+  calUpdateUI(); render();
 }
 
 function calUpdateUI() {
-  const n = calShots.filter(s => s.actual).length;
-  for (let i = 0; i < CAL_MAX; i++) {
-    const el = $('csd-' + i);
-    if (el) el.classList.toggle('done', i < n);
-  }
-  if (!calMode) return;
-  const inst = $('cal-instruction');
+  const n = calShots.length;
   const stat = $('cal-status');
-  const btn  = $('cal-shoot-btn');
+  const inst = $('cal-instruction');
+  const btn1 = $('cal-rec1-btn');
+  const btn2 = $('cal-rec2-btn');
   const kPct = Math.round(tableK * 100);
   const kStr = (kPct >= 0 ? '+' : '') + kPct + '%';
-  if (stat) stat.innerHTML = `${n} of ${CAL_MAX} shots · table profile: <strong style="color:#f0df70">${kStr}</strong>`;
-  if (calPhase === 'setup') {
-    if (inst) inst.textContent = 'Set up a kick shot. Aim the cue ball at a rail. Tap SHOOT when ready.';
-    if (btn)  { btn.textContent = 'SHOOT →'; btn.style.display = ''; }
+
+  if (stat) stat.innerHTML = `${n}/${CAL_MAX} shots · <strong style="color:#f0df70">bias ${kStr}</strong>`;
+
+  if (!calMode) return;
+
+  if (calPhase === 'idle') {
+    if (inst) inst.textContent = 'Set up your kick shot. Tap ① when ready to shoot.';
+    if (btn1) btn1.style.display = '';
+    if (btn2) btn2.style.display = 'none';
   } else {
-    if (inst) inst.textContent = 'Shoot it on the table. Then tap where the cue ball actually stopped.';
-    if (btn)  btn.style.display = 'none';
+    if (inst) inst.textContent = 'Shoot it. Then dial the handle/sliders to match what actually worked. Tap ②.';
+    if (btn1) btn1.style.display = 'none';
+    if (btn2) btn2.style.display = '';
   }
+
+  // Update log
+  const log = $('cal-log');
+  if (log) {
+    log.innerHTML = calShots.slice(-10).reverse().map((s,i) => {
+      const d = new Date(s.ts);
+      const t = d.getMonth()+1 + '/' + d.getDate() + ' ' + d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
+      const err = s.actualPos ? Math.round(Math.hypot(s.actualPos.x-s.predictedPos.x, s.actualPos.y-s.predictedPos.y)) : '—';
+      return `<div style="display:flex;justify-content:space-between;padding:1px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+        <span>${t} · ${s.rails}R · spd:${Math.round(s.speed*10)}</span>
+        <span style="color:${err==='—'?'#888':err<15?'#4ade80':'#f0df70'}">${err==='—'?err:err+'px off'}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Update personal bias display
+  updatePersonalBias();
 }
 
-function calShoot() {
+function calRecord1() {
   if (!calMode) return;
   const segs = computeSegs(S.aimAngle, S.numRails);
   if (!segs.length) { alert('Aim at a rail first.'); return; }
   const last = segs[segs.length - 1].to;
+
   // Show predicted marker
   sC('cal-predicted', last.x, last.y);
   $('cal-predicted-lbl').setAttribute('x', last.x);
   $('cal-predicted-lbl').setAttribute('y', last.y - 14);
   sV('cal-predicted', true); sV('cal-predicted-lbl', true);
   sV('cal-actual', false);   sV('cal-actual-lbl', false);
-  calShots.push({ predicted: {x: last.x, y: last.y}, actual: null });
-  calPhase = 'tap';
+
+  calPendingShot = {
+    ts: Date.now(),
+    cb: {...S.cb},
+    aimAngle: S.aimAngle,
+    rails: S.numRails,
+    speed: S.speed,
+    spin: S.spin,
+    bias: S.bias,
+    predictedPos: {x: last.x, y: last.y},
+    actualPos: null
+  };
+  calPhase = 'predicted';
   calUpdateUI();
 }
 
-function calTapActual(p) {
-  if (!calMode || calPhase !== 'tap') return false;
-  const shot = calShots[calShots.length - 1];
-  shot.actual = {x: p.x, y: p.y};
-  sC('cal-actual', p.x, p.y);
-  $('cal-actual-lbl').setAttribute('x', p.x);
-  $('cal-actual-lbl').setAttribute('y', p.y + 16);
+function calRecord2() {
+  if (!calMode || !calPendingShot || calPhase !== 'predicted') return;
+
+  // Capture current state as "what actually worked"
+  const segs = computeSegs(S.aimAngle, S.numRails);
+  const last = segs.length ? segs[segs.length - 1].to : calPendingShot.predictedPos;
+
+  calPendingShot.actualAimAngle = S.aimAngle;
+  calPendingShot.actualSpeed = S.speed;
+  calPendingShot.actualSpin = S.spin;
+  calPendingShot.actualPos = {x: last.x, y: last.y};
+
+  // Show actual marker
+  sC('cal-actual', last.x, last.y);
+  $('cal-actual-lbl').setAttribute('x', last.x);
+  $('cal-actual-lbl').setAttribute('y', last.y + 16);
   sV('cal-actual', true); sV('cal-actual-lbl', true);
-  // Error: positive = came up short (k too low), negative = went long (k too high)
-  const dx = shot.actual.x - shot.predicted.x;
-  const dy = shot.actual.y - shot.predicted.y;
-  const err = Math.hypot(dx, dy) * (dy > 0 ? 1 : -1);
-  const kAdj = -err * 0.0008;
-  // Average all shots
-  const done = calShots.filter(s => s.actual);
-  tableK = done.reduce((s, sh) => {
-    const ex = sh.actual.x - sh.predicted.x;
-    const ey = sh.actual.y - sh.predicted.y;
-    return s + (-Math.hypot(ex,ey) * (ey>0?1:-1) * 0.0008);
-  }, 0) / done.length;
-  tableK = Math.max(-0.3, Math.min(0.3, tableK));
+
+  // Store shot
+  calShots.push(calPendingShot);
+  if (calShots.length > CAL_MAX) calShots = calShots.slice(-CAL_MAX);
+
+  // Recompute tableK from all shots
+  recomputeK();
   saveTableProfile();
-  // Update bias slider to reflect calibration
+
+  calPendingShot = null;
+  calPhase = 'idle';
+
+  const res = $('cal-result');
+  if (res) {
+    const dx = calPendingShot ? 0 : calShots[calShots.length-1].actualPos.x - calShots[calShots.length-1].predictedPos.x;
+    const dy = calShots[calShots.length-1].actualPos.y - calShots[calShots.length-1].predictedPos.y;
+    const dir = Math.abs(dx) < 8 && Math.abs(dy) < 8 ? 'on target ✓' :
+                dy < -8 ? 'went long' : dy > 8 ? 'came up short' :
+                dx < -8 ? 'went left' : 'went right';
+    const kPct = Math.round(tableK * 100);
+    res.style.display = 'block';
+    res.innerHTML = `<strong style="color:#f0df70">Shot ${calShots.length}: ${dir}</strong> · bias now ${(kPct>=0?'+':'')+kPct}%`;
+  }
+  calUpdateUI(); render();
+}
+
+function recomputeK() {
+  if (!calShots.length) { tableK = 0; return; }
+  const valid = calShots.filter(s => s.actualPos);
+  if (!valid.length) { tableK = 0; return; }
+  const avg = valid.reduce((sum, s) => {
+    const dy = s.actualPos.y - s.predictedPos.y;
+    const dx = s.actualPos.x - s.predictedPos.x;
+    return sum + (-Math.hypot(dx,dy) * (dy > 0 ? 1 : -1) * 0.0008);
+  }, 0) / valid.length;
+  tableK = Math.max(-0.3, Math.min(0.3, avg));
+  // Apply to bias slider
   const newBias = Math.round(tableK * 50 / 0.12);
   const slBias = $('sl-bias');
   if (slBias) { slBias.value = Math.max(-50, Math.min(50, newBias)); onSliders(); }
-  const dirText = dy < -8 ? 'went long' : dy > 8 ? 'came up short' : dx < -8 ? 'went left' : dx > 8 ? 'went right' : 'on target ✓';
-  const res = $('cal-result');
-  if (res) {
-    res.style.display = 'block';
-    const kPct = Math.round(tableK * 100);
-    res.innerHTML = `<strong style="color:#f0df70">Shot ${done.length}: ${dirText}</strong><br>` +
-      `Table profile: ${(kPct>=0?'+':'')+kPct}%` +
-      (done.length < 3 ? `<br><span style="color:rgba(255,255,255,0.5)">Shoot ${3-done.length} more for reliable profile</span>`
-                       : `<br><span style="color:#4ade80">✓ Profile ready — keep shooting to refine</span>`);
-  }
-  calPhase = 'setup';
-  calUpdateUI();
-  render();
-  return true;
+}
+
+function updatePersonalBias() {
+  const el = $('personal-bias');
+  if (!el) return;
+  if (!calShots.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  const kPct = Math.round(tableK * 100);
+  const kStr = (kPct >= 0 ? '+' : '') + kPct + '%';
+  el.textContent = 'PERSONAL BIAS: ' + kStr + ' (' + calShots.length + ' shots)';
+}
+
+function calTapActual(p) {
+  // Legacy tap mode no longer used — return false
+  return false;
 }
 
 function calUndo() {
-  if (!calShots.length) return;
-  calShots.pop(); calPhase = 'setup';
-  sV('cal-predicted', false); sV('cal-predicted-lbl', false);
-  sV('cal-actual',    false); sV('cal-actual-lbl',    false);
-  calUpdateUI();
+  if (calPhase === 'predicted') {
+    calPhase = 'idle'; calPendingShot = null;
+    sV('cal-predicted', false); sV('cal-predicted-lbl', false);
+  } else if (calShots.length) {
+    calShots.pop();
+    recomputeK(); saveTableProfile();
+  }
+  calUpdateUI(); render();
 }
 
 function calReset() {
-  calShots = []; calPhase = 'setup'; tableK = 0.00; saveTableProfile();
+  calShots = []; calPhase = 'idle'; calPendingShot = null;
+  tableK = 0.00; saveTableProfile();
   const slBias = $('sl-bias'); if (slBias) { slBias.value = 0; onSliders(); }
   sV('cal-predicted', false); sV('cal-predicted-lbl', false);
   sV('cal-actual',    false); sV('cal-actual-lbl',    false);
@@ -1265,6 +1482,34 @@ buildReadouts();
 buildPills();
 loadTableProfile();
 render();
+SNAP_POINTS=buildSnapPoints();
+// Show snap label for initial CB position
+(function(){
+  if (!SNAP_POINTS.length) return;
+  const pt = SNAP_POINTS.reduce((best, p) => {
+    const d = Math.hypot(S.cb.x-p.x, S.cb.y-p.y);
+    return d < Math.hypot(S.cb.x-best.x, S.cb.y-best.y) ? p : best;
+  });
+  if (Math.hypot(S.cb.x-pt.x, S.cb.y-pt.y) < SNAP_RADIUS) {
+    showSnapLabel($('tbl'), pt.x, pt.y, pt.label, 'cb');
+  }
+})();
+
+const _sl = document.getElementById('shot-library-list');
+if (_sl) {
+  _sl.innerHTML = SHOT_LIBRARY.map((s,i) =>
+    '<div data-idx="' + i + '" class="shot-lib-item" style="padding:5px 6px;border-bottom:1px solid rgba(255,255,255,0.07);cursor:pointer;">' +
+    '<div style="font-size:11px;font-weight:900;color:#f0df70">' + s.name + '</div>' +
+    '<div style="font-size:9px;color:rgba(255,255,255,0.45)">' + s.desc + '</div>' +
+    '</div>'
+  ).join('');
+  _sl.addEventListener('click', e => {
+    const item = e.target.closest('.shot-lib-item');
+    if (item) loadShot(parseInt(item.dataset.idx));
+  });
+}
+const _epSnap=document.getElementById('ep-snap');
+if(_epSnap)_epSnap.classList.add('active');
 // ── FLIP DIAGRAM ──────────────────────────────────────────────
 function flipDiagram() {
   const cur = S._diagDragRh !== undefined ? S._diagDragRh : false;
@@ -1286,6 +1531,79 @@ function swapPanels() {
   }
 }
 
+// ── GLOBAL TOUCH SAFETY RESET (iOS pointer capture bug) ──────
+document.addEventListener('touchend', () => {
+  drag = null;
+  if (typeof diagDrag !== 'undefined') diagDrag = false;
+  if (typeof overlayDrag !== 'undefined') overlayDrag = null;
+}, {passive: true});
+document.addEventListener('touchcancel', () => {
+  drag = null;
+  if (typeof diagDrag !== 'undefined') diagDrag = false;
+  if (typeof overlayDrag !== 'undefined') overlayDrag = null;
+}, {passive: true});
+
+// ── SNAP SYSTEM ──────────────────────────────────────────────
+function buildSnapPoints(){
+  const pts=[],seen=new Set(),DX=50,DY=50,OX=30,OY=30;
+  function add(x,y,label){const k=x+','+y;if(seen.has(k))return;seen.add(k);pts.push({x,y,label});}
+  for(let row=0;row<4;row++){
+    for(let col=0;col<8;col++){
+      const n=row*8+col+1,x0=OX+col*DX,y0=OY+row*DY,cx=x0+DX/2,cy=y0+DY/2;
+      add(cx,cy,String(n));
+      add(x0,y0+DY,n+'a');add(x0,cy,n+'b');add(x0,y0,n+'c');add(cx,y0,n+'d');
+      add(x0+DX,y0,n+'e');add(x0+DX,cy,n+'f');add(x0+DX,y0+DY,n+'g');add(cx,y0+DY,n+'h');
+    }
+  }
+  return pts;
+}
+function nearestSnap(x,y){let best=null,bestD=Infinity;for(const pt of SNAP_POINTS){const d=Math.hypot(x-pt.x,y-pt.y);if(d<SNAP_RADIUS&&d<bestD){best=pt;bestD=d;}}return best;}
+function applySnap(x,y){if(!snapOn||!SNAP_POINTS.length)return{x,y,label:null};const pt=nearestSnap(x,y);return pt?{x:pt.x,y:pt.y,label:pt.label}:{x,y,label:null};}
+function showSnapLabel(svgEl,x,y,label,ballId){
+  const old=document.getElementById('snap-lbl-'+ballId);if(old)old.remove();if(!label)return;
+  const rect=svgEl.getBoundingClientRect(),vb=svgEl.viewBox.baseVal;
+  const scx=rect.left+(x/vb.width)*rect.width,scy=rect.top+(y/vb.height)*rect.height;
+  const lbl=document.createElement('div');lbl.id='snap-lbl-'+ballId;lbl.className='snap-label';
+  lbl.textContent='CB: '+label;lbl.style.left=(scx+12)+'px';lbl.style.top=(scy-10)+'px';lbl.style.opacity='1';
+  document.body.appendChild(lbl);
+  if(snapLabelTimer)clearTimeout(snapLabelTimer);
+  snapLabelTimer=setTimeout(()=>{lbl.style.opacity='0';setTimeout(()=>lbl.remove(),400);},2000);
+}
+function toggleSnap(){
+  snapOn=!snapOn;const btn=document.getElementById('ep-snap');
+  if(btn){btn.classList.toggle('active',snapOn);btn.blur();}
+  document.activeElement&&document.activeElement.blur();
+}
+// ── LOCK SYSTEM ──────────────────────────────────────────────
+function toggleLock(which){
+  if(which==='table')   lockTable  =!lockTable;
+  if(which==='sliders') lockSliders=!lockSliders;
+  const lt=$('ep-lt'),ls=$('ep-ls');
+  if(lt)lt.classList.toggle('locked',lockTable);
+  if(ls)ls.classList.toggle('locked',lockSliders);
+  const tblEl=$('tbl');if(tblEl)tblEl.style.touchAction=lockTable?'auto':'none';
+  const sg=document.querySelector('.sgroup');if(sg)sg.style.opacity=lockSliders?'0.4':'1';
+  document.querySelectorAll('.sgroup input[type=range]').forEach(el=>{el.disabled=lockSliders;});
+  document.activeElement&&document.activeElement.blur();
+}
+// ── ZERO ──────────────────────────────────────────────────────
+function zeroSliders(){
+  if(lockSliders)return;
+  S.speed=0.5;S.spin=0;S.bias=0;
+  $('sl-spd').value='50';$('sl-spn').value='0';['fat','med','thin'].forEach(z=>{const sl=$('sl-bias-'+z);if(sl)sl.value='0';});
+  onSliders();document.activeElement&&document.activeElement.blur();
+}
+// ── EDGE ZOOM ────────────────────────────────────────────────
+function edgeZoom(factor){
+  const w=document.getElementById('zoom-wrap');if(!w)return;
+  const cur=w._zscale||1,next=Math.max(0.1,Math.min(3,cur*factor));
+  w._zscale=next;w.style.transform='scale('+next+')';w.style.transformOrigin='top left';
+}
+function edgeZoomReset(){
+  const w=document.getElementById('zoom-wrap');if(!w)return;
+  w._zscale=1;w.style.transform='scale(1)';
+}
+
 </script>
 <script>
 (function(){
@@ -1304,5 +1622,24 @@ function swapPanels() {
   document.addEventListener('touchend',e=>{if(e.touches.length<2)active=false;});
 })();
 </script>
+<!-- ── EDGE CONTROL PANEL ── -->
+<div id="edge-panel-wrap">
+<div id="edge-panel">
+  <div class="ep-label">zoom</div>
+  <button class="ep-btn" tabindex="-1" onclick="edgeZoom(1.3)">＋</button>
+  <button class="ep-btn" tabindex="-1" onclick="edgeZoom(1/1.3)">－</button>
+  <button class="ep-btn" tabindex="-1" onclick="edgeZoomReset()">⟳</button>
+  <div class="ep-sep"></div>
+  <div class="ep-label">snap</div>
+  <button class="ep-btn active" id="ep-snap" tabindex="-1" onclick="toggleSnap()">✦</button>
+  <div class="ep-sep"></div>
+  <div class="ep-label">lock</div>
+  <button class="ep-btn" id="ep-lt" tabindex="-1" onclick="toggleLock('table')">T</button>
+  <button class="ep-btn" id="ep-ls" tabindex="-1" onclick="toggleLock('sliders')">S</button>
+  <div class="ep-sep"></div>
+  <div class="ep-label">zero</div>
+  <button class="ep-btn" tabindex="-1" onclick="zeroSliders()">0S</button>
+</div>
+</div><!-- /edge-panel-wrap -->
 </body>
 </html>

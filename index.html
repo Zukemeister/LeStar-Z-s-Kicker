@@ -167,11 +167,11 @@ if ('serviceWorker' in navigator) {
   });
 }
 const SHOT_LIBRARY = [
-  { name: '1-rail — sq 28',   cb:{x:355,y:205}, angle:-0.85, rails:1, desc:'CB at 28, 1-rail kick to top' },
-  { name: '2-rail — sq 25',   cb:{x:55, y:205}, angle:-1.05, rails:2, desc:'CB at 25, 2-rail corner kick' },
-  { name: '3-rail — sq 20',   cb:{x:205,y:155}, angle:-0.70, rails:3, desc:'CB at 20, 3-rail pattern' },
-  { name: '2-rail — sq 26',   cb:{x:105,y:205}, angle:-1.20, rails:2, desc:'CB at 26, 2-rail tight corner' },
-  { name: '1-rail long — sq 4', cb:{x:205,y:55},  angle: 0.30, rails:1, desc:'CB at 4, long rail kick' },
+  { name: '1-rail kick',  cb:{x:355,y:205}, ob:{x:55, y:55},  angle:-0.85, rails:1, desc:'CB at 28, kick OB near TL corner' },
+  { name: '2-rail kick',  cb:{x:55, y:205}, ob:{x:405,y:55},  angle:-1.05, rails:2, desc:'CB at 25, kick OB near TR corner' },
+  { name: '3-rail kick',  cb:{x:205,y:155}, ob:{x:230,y:55},  angle:-0.70, rails:3, desc:'CB at 20, kick OB near top center' },
+  { name: '2-rail tight', cb:{x:105,y:205}, ob:{x:405,y:205}, angle:-1.20, rails:2, desc:'CB at 26, kick OB near BR corner' },
+  { name: 'Long rail',    cb:{x:205,y:55},  ob:{x:405,y:205}, angle: 0.30, rails:1, desc:'CB at 4, kick OB near BR corner' },
 ];
 let libraryOpen = false;
 function toggleShotLibrary() {
@@ -185,6 +185,9 @@ function loadShot(idx) {
   S.cb = {...shot.cb};
   S.aimAngle = shot.angle;
   S.numRails = shot.rails;
+  if (shot.ob) { S.ob = {...shot.ob}; S.obVisible = true; }
+  else { S.obVisible = false; }
+  S.targetOb = shot.ob ? {...shot.ob} : null;
   buildPills(); render(); toggleShotLibrary();
 }
 
@@ -248,6 +251,11 @@ function loadShot(idx) {
   <marker id="arr2" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#f87171"/></marker>
   <marker id="arr3" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#4ade80"/></marker>
   <marker id="arr4" markerWidth="7" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0,7 2.5,0 5" fill="#e879f9"/></marker>
+  <radialGradient id="gOB" cx="35%" cy="28%">
+    <stop offset="0%" stop-color="#ff9999"/>
+    <stop offset="50%" stop-color="#cc4444"/>
+    <stop offset="100%" stop-color="#881111"/>
+  </radialGradient>
 </defs>
 
 <g id="tbl-content">
@@ -563,6 +571,14 @@ function loadShot(idx) {
   <circle id="cb"        cx="170" cy="130" r="10" fill="url(#gBall)" stroke="#ccccbb" stroke-width="1" cursor="grab"/>
   <circle id="cb-hi"     cx="166" cy="126" r="3.5" fill="#ffffff" opacity="0.55"/>
   <circle id="cb-dot"    cx="170" cy="130" r="1.5" fill="#999" opacity="0.4"/>
+  <!-- Target OB — stationary, shown when a library shot is loaded -->
+  <circle id="kob-shadow" cx="0" cy="0" r="10" fill="#000" opacity="0.25" visibility="hidden"/>
+  <circle id="kob"        cx="0" cy="0" r="10" fill="url(#gOB)"  stroke="#cc8888" stroke-width="1" visibility="hidden"/>
+  <circle id="kob-hi"     cx="0" cy="0" r="3.5" fill="#ffffff" opacity="0.5" visibility="hidden"/>
+  <!-- Loose OB for kick shots -->
+  <circle id="kick-ob-shadow" cx="331" cy="131" r="10" fill="#000" opacity="0" />
+  <circle id="kick-ob"        cx="330" cy="130" r="10" fill="url(#gOB)" stroke="#903010" stroke-width="1" opacity="0" />
+  <circle id="kick-ob-hi"     cx="326" cy="126" r="3.5" fill="#fff" opacity="0" />
 </g>
 </g>
 </svg>
@@ -677,6 +693,7 @@ const S = {
   selectedContact: 0,
   contactOn: true,
   mapOn: true,
+  targetOb: null,
   tableSize: 9,
   metric: false,
 };
@@ -859,6 +876,12 @@ function render(){
 
   sC('cb',        cb.x,    cb.y);
   sC('cb-shadow', cb.x+1.5,cb.y+2);
+  // Kick target ball
+  const kob = S.ob, kobVis = S.obVisible ? '1' : '0', kobShadowVis = S.obVisible ? '0.32' : '0';
+  sC('kick-ob', kob.x, kob.y); sC('kick-ob-shadow', kob.x+1.5, kob.y+2); sC('kick-ob-hi', kob.x-3.5, kob.y-3.5);
+  document.getElementById('kick-ob')?.setAttribute('opacity', kobVis);
+  document.getElementById('kick-ob-shadow')?.setAttribute('opacity', kobShadowVis);
+  document.getElementById('kick-ob-hi')?.setAttribute('opacity', S.obVisible ? '0.45' : '0');
   sC('cb-hi',     cb.x-3.5,cb.y-3.5);
   sC('cb-dot',    cb.x,    cb.y);
 
@@ -1136,6 +1159,7 @@ svg.addEventListener('pointerdown',e=>{
   e.preventDefault();
   if(lockTable)return;
   const p=svgPt(e);
+  if(S.obVisible && Math.hypot(p.x-S.ob.x,p.y-S.ob.y)<36){drag='kick-ob';svg.setPointerCapture(e.pointerId);return;}
   const cb=S.cb;
   if (calTapActual(p)) return;
   if(Math.hypot(p.x-cb.x,p.y-cb.y)<22){drag='cb';svg.setPointerCapture(e.pointerId);return;}
@@ -1155,7 +1179,11 @@ svg.addEventListener('pointerdown',e=>{
 svg.addEventListener('pointermove',e=>{
   if(!drag)return;e.preventDefault();
   const p=svgPt(e);
-  if(drag==='cb'){
+  if(drag==='kick-ob'){
+    const c=clampBall(p.x,p.y),sn=applySnap(c.x,c.y);
+    S.ob={x:sn.x,y:sn.y};
+    if(sn.label)showSnapLabel($('tbl'),sn.x,sn.y,sn.label,'ob');
+  } else if(drag==='cb'){
     const c=clampBall(p.x,p.y),sn=applySnap(c.x,c.y);
     S.cb={x:sn.x,y:sn.y};
     if(sn.label)showSnapLabel($('tbl'),sn.x,sn.y,sn.label,'cb');

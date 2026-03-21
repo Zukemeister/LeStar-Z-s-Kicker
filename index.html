@@ -683,6 +683,8 @@ const RAIL_SHORT = { top:'TOP', bottom:'BTM', left:'LFT', right:'RGT' };
 // ─────────────────────────────────────────────────────────────────────────────
 const S = {
   cb:        { x:170, y:130 },
+  ob:        { x:330, y:130 },
+  obVisible: false,
   aimAngle:  -0.65,
   numRails:  1,
   speed:     0.5,
@@ -1231,16 +1233,12 @@ function onSliders(){
   const _sv=parseInt($('sl-spd').value),_sn=Math.abs(parseInt($('sl-spn').value));
   if($('sv-spd-n'))$('sv-spd-n').textContent=Math.max(1,Math.round(_sv/10));
   if($('sv-spn-n'))$('sv-spn-n').textContent=_sn===0?'0':Math.max(1,Math.round(_sn/4*10/10));
-  const _bn=Math.abs(parseInt($('sl-bias').value));
-  if($('sv-bias-n'))$('sv-bias-n').textContent=_bn===0?'0':Math.max(1,Math.round(_bn/50*10));
   const spinLabels={
     '-4':'2 tips L', '-3':'1½ tips L', '-2':'1 tip L', '-1':'½ tip L',
     '0':'center',
     '1':'½ tip R',   '2':'1 tip R',   '3':'1½ tips R', '4':'2 tips R'
   };
   $('sv-spn').textContent = spinLabels[String(sv)];
-  let bt='neutral';if(bv>3)bt='long+'+bv;if(bv<-3)bt='short'+bv;
-  $('sv-bias').textContent=bt;
   render();
 }
 
